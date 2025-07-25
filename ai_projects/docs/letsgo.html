@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyberpunk Hyperdrive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: radial-gradient(ellipse at center, #0ff 0%, #0f2027 60%, #ff00cc 100%);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+    .crazy-neon {
+      font-size: 4rem;
+      padding: 3rem 6rem;
+      color: #fff;
+      background: linear-gradient(90deg, #00ffe7 0%, #ff00cc 50%, #fffb00 100%);
+      border: 4px solid #fff;
+      border-radius: 2.5rem;
+      box-shadow: 0 0 80px #00ffe7, 0 0 160px #ff00cc, 0 0 40px #fffb00, 0 0 0 8px #fff2 inset;
+      text-shadow: 0 0 30px #fffb00, 0 0 60px #ff00cc, 0 0 10px #00ffe7;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      letter-spacing: 0.15em;
+      font-family: 'Orbitron', Arial, sans-serif;
+      position: relative;
+      z-index: 2;
+      animation: pulse 1.2s infinite alternate, hue-rotate 3s linear infinite;
+    }
+    .crazy-neon:hover {
+      transform: scale(1.15) rotate(1deg);
+      box-shadow: 0 0 160px #fffb00, 0 0 320px #ff00cc, 0 0 80px #00ffe7, 0 0 0 16px #fff4 inset;
+      filter: brightness(1.2) saturate(1.5);
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 80px #00ffe7, 0 0 160px #ff00cc, 0 0 40px #fffb00, 0 0 0 8px #fff2 inset; }
+      100% { box-shadow: 0 0 160px #fffb00, 0 0 320px #ff00cc, 0 0 80px #00ffe7, 0 0 0 16px #fff4 inset; }
+    }
+    @keyframes hue-rotate {
+      0% { filter: hue-rotate(0deg); }
+      100% { filter: hue-rotate(360deg); }
+    }
+    /* Animated grid background */
+    .grid {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: repeating-linear-gradient(90deg, rgba(0,255,255,0.08) 0px, rgba(0,255,255,0.08) 2px, transparent 2px, transparent 40px),
+                  repeating-linear-gradient(0deg, rgba(255,0,255,0.08) 0px, rgba(255,0,255,0.08) 2px, transparent 2px, transparent 40px);
+      animation: gridmove 3s linear infinite;
+    }
+    @keyframes gridmove {
+      0% { background-position: 0 0, 0 0; }
+      100% { background-position: 40px 40px, 40px 40px; }
+    }
+    /* Scanlines overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03) 0px,
+        rgba(255,255,255,0.03) 2px,
+        transparent 2px,
+        transparent 8px
+      );
+      z-index: 3;
+    }
+    /* Glitch effect */
+    .crazy-neon::after {
+      content: "LET'S GOOOOOO!!";
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      color: #ff00cc;
+      opacity: 0.5;
+      z-index: 3;
+      pointer-events: none;
+      transform: translate(2px, -2px);
+      clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%);
+      animation: glitch 1s infinite linear alternate-reverse;
+    }
+    @keyframes glitch {
+      0% { transform: translate(2px, -2px); opacity: 0.5; }
+      20% { transform: translate(-2px, 2px); opacity: 0.7; }
+      40% { transform: translate(4px, -1px); opacity: 0.4; }
+      60% { transform: translate(-1px, 3px); opacity: 0.6; }
+      80% { transform: translate(1px, -3px); opacity: 0.8; }
+      100% { transform: translate(2px, -2px); opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <button class="crazy-neon" onclick="window.location.href='ready.html'">LET'S GOOOOOO!!</button>
+</body>
+</html> 
