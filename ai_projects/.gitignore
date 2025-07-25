@@ -209,3 +209,11 @@ __marimo__/
 .sqlite3
 .ipynb_checkpoints/
 __pycache__/
+# Ignore data and model outputs
+data/
+models/
+*.ipynb_checkpoints/
+# Ignore data and model outputs
+data/
+models/
+*.ipynb_checkpoints/

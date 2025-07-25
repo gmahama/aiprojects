@@ -1,1 +1,3 @@
-# AI Projects/n/nThis repository contains AI projects I'm working on.  Organized by topic and updated frequently
+# AI Projects
+
+This repo contains AI-related coding work and experiments.
