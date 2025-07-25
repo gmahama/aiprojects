@@ -4,90 +4,151 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Georges Mahama - Profile</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Montserrat:wght@700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+      background: #0f1021;
       min-height: 100vh;
       margin: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'Quicksand', Arial, sans-serif;
+      overflow: hidden;
+    }
+    /* Animated cyberpunk grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+      background: repeating-linear-gradient(90deg, rgba(0,255,255,0.07) 0 2px, transparent 2px 80px),
+                  repeating-linear-gradient(0deg, rgba(255,0,255,0.07) 0 2px, transparent 2px 80px);
+      animation: gridmove 8s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes gridmove {
+      0% { background-position: 0 0, 0 0; }
+      100% { background-position: 80px 80px, 80px 80px; }
     }
     .profile-card {
-      background: #fff;
-      border-radius: 2rem;
-      box-shadow: 0 8px 32px rgba(80, 80, 200, 0.15), 0 1.5px 0 #a5b4fc;
+      background: linear-gradient(135deg, rgba(30,0,60,0.95) 0%, rgba(0,10,30,0.95) 100%);
+      border-radius: 1.5rem;
+      box-shadow: 0 0 32px 4px #0ff, 0 0 64px 0 #f0f, 0 2px 32px #000b;
       padding: 3rem 2.5rem 2.5rem 2.5rem;
       max-width: 350px;
       text-align: center;
       position: relative;
       overflow: visible;
+      border: 2px solid #0ff;
+      z-index: 1;
+    }
+    .profile-card::after {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 2rem;
+      border: 2px solid #f0f;
+      filter: blur(6px);
+      opacity: 0.5;
+      z-index: -1;
+      pointer-events: none;
     }
     .profile-pic {
       width: 120px;
       height: 120px;
       object-fit: cover;
       border-radius: 50%;
-      border: 5px solid #6366f1;
-      box-shadow: 0 4px 24px #6366f155;
+      border: 4px solid #0ff;
+      box-shadow: 0 0 32px #0ff, 0 0 16px #f0f;
       margin-top: -80px;
-      background: #e0e7ff;
+      background: #181a2a;
+      transition: box-shadow 0.3s;
+    }
+    .profile-pic:hover {
+      box-shadow: 0 0 48px #0ff, 0 0 32px #f0f, 0 0 8px #fff;
     }
     .profile-name {
-      font-family: 'Montserrat', Arial, sans-serif;
-      font-size: 2rem;
-      color: #3730a3;
+      font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
+      font-size: 2.1rem;
+      color: #0ff;
       margin: 1.2rem 0 0.5rem 0;
       font-weight: 700;
-      letter-spacing: 0.02em;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 8px #0ff, 0 0 16px #f0f;
+      text-transform: uppercase;
     }
     .profile-desc {
-      color: #6366f1;
+      color: #f0f;
       font-size: 1.1rem;
       margin-bottom: 2rem;
       font-weight: 600;
+      text-shadow: 0 0 6px #f0f, 0 0 2px #0ff;
     }
     .profile-btn {
       font-size: 1.1rem;
       padding: 0.9rem 2.2rem;
-      background: linear-gradient(90deg, #6366f1 0%, #a5b4fc 100%);
-      color: #fff;
+      background: linear-gradient(90deg, #0ff 0%, #f0f 100%);
+      color: #181a2a;
       border: none;
       border-radius: 1.5rem;
-      box-shadow: 0 2px 12px #6366f188;
+      box-shadow: 0 0 16px #0ff, 0 0 32px #f0f;
       cursor: pointer;
-      font-family: 'Montserrat', Arial, sans-serif;
+      font-family: 'Orbitron', 'Montserrat', Arial, sans-serif;
       font-weight: 700;
-      letter-spacing: 0.05em;
-      transition: background 0.2s, transform 0.2s;
+      letter-spacing: 0.08em;
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+    }
+    .profile-btn::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 2rem;
+      border: 2px solid #0ff;
+      filter: blur(4px);
+      opacity: 0.7;
+      z-index: -1;
+      pointer-events: none;
     }
     .profile-btn:hover {
-      background: linear-gradient(90deg, #a5b4fc 0%, #6366f1 100%);
-      transform: scale(1.05) rotate(-1deg);
+      background: linear-gradient(90deg, #f0f 0%, #0ff 100%);
+      color: #fff;
+      transform: scale(1.07) rotate(-1deg);
+      box-shadow: 0 0 32px #f0f, 0 0 48px #0ff;
     }
-    /* Playful accent dots */
-    .dot {
+    /* Neon circuit lines (SVG) */
+    .circuit {
       position: absolute;
-      border-radius: 50%;
-      opacity: 0.18;
+      left: 0; right: 0; top: 0; bottom: 0;
+      width: 100%; height: 100%;
       z-index: 0;
+      pointer-events: none;
     }
-    .dot1 { width: 60px; height: 60px; background: #6366f1; top: -30px; left: -30px; }
-    .dot2 { width: 40px; height: 40px; background: #a5b4fc; bottom: -20px; right: -20px; }
-    .dot3 { width: 24px; height: 24px; background: #6366f1; top: 20px; right: -12px; }
   </style>
 </head>
 <body>
   <div class="profile-card">
-    <div class="dot dot1"></div>
-    <div class="dot dot2"></div>
-    <div class="dot dot3"></div>
+    <svg class="circuit" viewBox="0 0 350 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="10,30 60,30 60,80" stroke="#0ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+      <polyline points="340,370 290,370 290,320" stroke="#f0f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+      <polyline points="175,0 175,40" stroke="#0ff" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)"/>
+      <defs>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+    </svg>
     <img src="Casual 1.jpg" alt="Profile picture of Georges Mahama" class="profile-pic">
     <div class="profile-name">Georges Mahama</div>
     <div class="profile-desc">My name is Georges Mahama.</div>
-    <button class="profile-btn">Contact Me</button>
+    <a class="profile-btn" href="https://www.linkedin.com/in/georges-mahama/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
   </div>
 </body>
 </html> 
