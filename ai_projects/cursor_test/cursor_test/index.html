@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pacman Button</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #222;
+      flex-direction: column;
+    }
+    .pacman-btn {
+      width: 120px;
+      height: 120px;
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .pacman-shape {
+      width: 100px;
+      height: 100px;
+      background: #ffe600;
+      border-radius: 50%;
+      position: relative;
+      clip-path: polygon(
+        50% 50%,
+        100% 0%,
+        100% 100%,
+        50% 50%,
+        0% 100%,
+        0% 0%
+      );
+      /* The above creates a Pacman mouth */
+      box-shadow: 0 0 20px #ffe60099;
+      transition: box-shadow 0.2s;
+    }
+    .pacman-btn:active .pacman-shape {
+      box-shadow: 0 0 40px #ffe600cc;
+    }
+    .pacman-eye {
+      position: absolute;
+      top: 25px;
+      left: 65px;
+      width: 12px;
+      height: 12px;
+      background: #222;
+      border-radius: 50%;
+    }
+    .hooray {
+      color: #ffe600;
+      font-size: 2.5rem;
+      font-family: 'Arial Black', Arial, sans-serif;
+      text-shadow: 2px 2px 8px #000, 0 0 20px #ffe60099;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    .hooray.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <button class="pacman-btn" id="pacmanBtn" aria-label="Pacman Button">
+    <div class="pacman-shape">
+      <div class="pacman-eye"></div>
+    </div>
+  </button>
+  <div class="hooray" id="hoorayText">hooray!</div>
+  <script>
+    const btn = document.getElementById('pacmanBtn');
+    const hooray = document.getElementById('hoorayText');
+    btn.addEventListener('click', () => {
+      hooray.classList.add('show');
+      setTimeout(() => {
+        hooray.classList.remove('show');
+      }, 1200);
+    });
+  </script>
+</body>
+</html> 

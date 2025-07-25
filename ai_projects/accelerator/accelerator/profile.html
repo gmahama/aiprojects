@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Georges Mahama - Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Quicksand', Arial, sans-serif;
+    }
+    .profile-card {
+      background: #fff;
+      border-radius: 2rem;
+      box-shadow: 0 8px 32px rgba(80, 80, 200, 0.15), 0 1.5px 0 #a5b4fc;
+      padding: 3rem 2.5rem 2.5rem 2.5rem;
+      max-width: 350px;
+      text-align: center;
+      position: relative;
+      overflow: visible;
+    }
+    .profile-pic {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 5px solid #6366f1;
+      box-shadow: 0 4px 24px #6366f155;
+      margin-top: -80px;
+      background: #e0e7ff;
+    }
+    .profile-name {
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-size: 2rem;
+      color: #3730a3;
+      margin: 1.2rem 0 0.5rem 0;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .profile-desc {
+      color: #6366f1;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      font-weight: 600;
+    }
+    .profile-btn {
+      font-size: 1.1rem;
+      padding: 0.9rem 2.2rem;
+      background: linear-gradient(90deg, #6366f1 0%, #a5b4fc 100%);
+      color: #fff;
+      border: none;
+      border-radius: 1.5rem;
+      box-shadow: 0 2px 12px #6366f188;
+      cursor: pointer;
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .profile-btn:hover {
+      background: linear-gradient(90deg, #a5b4fc 0%, #6366f1 100%);
+      transform: scale(1.05) rotate(-1deg);
+    }
+    /* Playful accent dots */
+    .dot {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.18;
+      z-index: 0;
+    }
+    .dot1 { width: 60px; height: 60px; background: #6366f1; top: -30px; left: -30px; }
+    .dot2 { width: 40px; height: 40px; background: #a5b4fc; bottom: -20px; right: -20px; }
+    .dot3 { width: 24px; height: 24px; background: #6366f1; top: 20px; right: -12px; }
+  </style>
+</head>
+<body>
+  <div class="profile-card">
+    <div class="dot dot1"></div>
+    <div class="dot dot2"></div>
+    <div class="dot dot3"></div>
+    <img src="Casual 1.jpg" alt="Profile picture of Georges Mahama" class="profile-pic">
+    <div class="profile-name">Georges Mahama</div>
+    <div class="profile-desc">My name is Georges Mahama.</div>
+    <button class="profile-btn">Contact Me</button>
+  </div>
+</body>
+</html> 
