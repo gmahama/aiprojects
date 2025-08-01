@@ -17,7 +17,8 @@ class TrippyPong {
             radius: 8,
             dx: 4,
             dy: 4,
-            trail: []
+            trail: [],
+            trailLength: 25
         };
         
         this.playerPaddle = {
@@ -89,8 +90,13 @@ class TrippyPong {
     
     updateBall() {
         // Update ball trail
-        this.ball.trail.push({ x: this.ball.x, y: this.ball.y });
-        if (this.ball.trail.length > 10) {
+        this.ball.trail.push({ 
+            x: this.ball.x, 
+            y: this.ball.y,
+            time: this.time,
+            speed: Math.sqrt(this.ball.dx * this.ball.dx + this.ball.dy * this.ball.dy)
+        });
+        if (this.ball.trail.length > this.ball.trailLength) {
             this.ball.trail.shift();
         }
         
@@ -229,35 +235,111 @@ class TrippyPong {
         this.ctx.fillStyle = gradient;
         this.ctx.fillRect(0, 0, this.width, this.height);
         
-        // Draw psychedelic waves
-        this.ctx.strokeStyle = this.getTrippyColor();
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
+        // Draw fractal patterns
+        this.drawFractalPatterns();
+    }
+    
+    drawFractalPatterns() {
+        this.ctx.save();
+        this.ctx.globalCompositeOperation = 'screen';
         
-        for (let x = 0; x < this.width; x += 5) {
-            const y = this.height / 2 + Math.sin(x * 0.02 + this.waveOffset) * 50 +
-                     Math.sin(x * 0.01 + this.waveOffset * 2) * 30;
-            if (x === 0) {
-                this.ctx.moveTo(x, y);
-            } else {
-                this.ctx.lineTo(x, y);
-            }
-        }
-        this.ctx.stroke();
+        // Fast fractal-like patterns using mathematical functions
+        this.drawFastFractalWaves();
+        this.drawSpiralPatterns();
+        this.drawGeometricFractals();
         
-        // Draw more waves
-        this.ctx.strokeStyle = this.getTrippyColor();
-        this.ctx.beginPath();
-        for (let x = 0; x < this.width; x += 5) {
-            const y = this.height / 2 + Math.sin(x * 0.03 + this.waveOffset * 1.5) * 30 +
-                     Math.sin(x * 0.015 + this.waveOffset * 3) * 20;
-            if (x === 0) {
-                this.ctx.moveTo(x, y);
-            } else {
-                this.ctx.lineTo(x, y);
+        this.ctx.restore();
+    }
+    
+    drawFastFractalWaves() {
+        const timeOffset = this.time * 0.5;
+        
+        // Multiple wave layers that create fractal-like complexity
+        for (let layer = 0; layer < 4; layer++) {
+            const layerOffset = layer * 0.7;
+            const amplitude = 30 + layer * 20;
+            const frequency = 0.02 + layer * 0.01;
+            
+            this.ctx.strokeStyle = `hsla(${(this.time * 30 + layer * 90) % 360}, 100%, 70%, 0.4)`;
+            this.ctx.lineWidth = 2 + layer * 0.5;
+            
+            this.ctx.beginPath();
+            for (let x = 0; x < this.width; x += 2) {
+                const y = this.height / 2 + 
+                         Math.sin(x * frequency + timeOffset + layerOffset) * amplitude +
+                         Math.sin(x * frequency * 2 + timeOffset * 1.5 + layerOffset) * (amplitude * 0.5) +
+                         Math.sin(x * frequency * 4 + timeOffset * 2 + layerOffset) * (amplitude * 0.25);
+                
+                if (x === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
             }
+            this.ctx.stroke();
         }
-        this.ctx.stroke();
+    }
+    
+    drawSpiralPatterns() {
+        const timeOffset = this.time * 0.3;
+        const centerX = this.width / 2;
+        const centerY = this.height / 2;
+        
+        // Draw multiple animated spirals
+        for (let i = 0; i < 3; i++) {
+            const spiralOffset = i * Math.PI * 2 / 3;
+            const radius = 50 + i * 30;
+            const speed = 0.02 + i * 0.01;
+            
+            this.ctx.strokeStyle = `hsla(${(this.time * 40 + i * 120) % 360}, 100%, 70%, 0.5)`;
+            this.ctx.lineWidth = 3;
+            
+            this.ctx.beginPath();
+            for (let angle = 0; angle < Math.PI * 8; angle += 0.1) {
+                const r = radius * (angle / (Math.PI * 8)) + Math.sin(angle * 3 + timeOffset) * 20;
+                const x = centerX + Math.cos(angle + spiralOffset + timeOffset) * r;
+                const y = centerY + Math.sin(angle + spiralOffset + timeOffset) * r;
+                
+                if (angle === 0) {
+                    this.ctx.moveTo(x, y);
+                } else {
+                    this.ctx.lineTo(x, y);
+                }
+            }
+            this.ctx.stroke();
+        }
+    }
+    
+    drawGeometricFractals() {
+        const timeOffset = this.time * 0.4;
+        
+        // Draw animated geometric patterns that look fractal-like
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + timeOffset;
+            const distance = 100 + Math.sin(timeOffset * 2 + i) * 50;
+            const x = this.width / 2 + Math.cos(angle) * distance;
+            const y = this.height / 2 + Math.sin(angle) * distance;
+            
+            this.drawRecursiveSquares(x, y, 40, 3, i);
+        }
+    }
+    
+    drawRecursiveSquares(x, y, size, depth, layer) {
+        if (depth <= 0) return;
+        
+        const hue = (this.time * 50 + layer * 60) % 360;
+        this.ctx.strokeStyle = `hsla(${hue}, 100%, 70%, ${0.3 + depth * 0.1})`;
+        this.ctx.lineWidth = depth * 2;
+        
+        // Draw square
+        this.ctx.strokeRect(x - size / 2, y - size / 2, size, size);
+        
+        // Draw smaller squares at corners
+        const newSize = size * 0.4;
+        this.drawRecursiveSquares(x - size / 2, y - size / 2, newSize, depth - 1, layer);
+        this.drawRecursiveSquares(x + size / 2, y - size / 2, newSize, depth - 1, layer);
+        this.drawRecursiveSquares(x - size / 2, y + size / 2, newSize, depth - 1, layer);
+        this.drawRecursiveSquares(x + size / 2, y + size / 2, newSize, depth - 1, layer);
     }
     
     drawParticles() {
@@ -275,35 +357,77 @@ class TrippyPong {
     }
     
     drawBall() {
-        // Draw ball trail
+        // Draw enhanced ball trail
         this.ball.trail.forEach((pos, index) => {
-            const alpha = index / this.ball.trail.length;
+            const progress = index / this.ball.trail.length;
+            const alpha = progress * 0.8;
+            const size = this.ball.radius * (0.3 + progress * 0.7);
+            
+            // Color based on trail position and time
+            const hue = (this.time * 100 + index * 15) % 360;
+            const trailColor = `hsla(${hue}, 100%, 70%, ${alpha})`;
+            
             this.ctx.save();
-            this.ctx.globalAlpha = alpha * 0.5;
-            this.ctx.fillStyle = this.getTrippyColor();
-            this.ctx.shadowColor = this.getTrippyColor();
-            this.ctx.shadowBlur = 15;
+            this.ctx.globalAlpha = alpha;
+            this.ctx.fillStyle = trailColor;
+            this.ctx.shadowColor = trailColor;
+            this.ctx.shadowBlur = 20 + progress * 10;
+            
+            // Draw main trail circle
             this.ctx.beginPath();
-            this.ctx.arc(pos.x, pos.y, this.ball.radius * alpha, 0, Math.PI * 2);
+            this.ctx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
             this.ctx.fill();
+            
+            // Draw outer glow ring
+            this.ctx.globalAlpha = alpha * 0.3;
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = trailColor;
+            this.ctx.beginPath();
+            this.ctx.arc(pos.x, pos.y, size + 3, 0, Math.PI * 2);
+            this.ctx.stroke();
+            
+            // Draw inner glow
+            this.ctx.globalAlpha = alpha * 0.6;
+            this.ctx.fillStyle = '#fff';
+            this.ctx.beginPath();
+            this.ctx.arc(pos.x, pos.y, size * 0.3, 0, Math.PI * 2);
+            this.ctx.fill();
+            
             this.ctx.restore();
         });
         
-        // Draw main ball
+        // Draw main ball with enhanced effects
         this.ctx.save();
-        this.ctx.fillStyle = this.getTrippyColor();
+        
+        // Outer glow
         this.ctx.shadowColor = this.getTrippyColor();
-        this.ctx.shadowBlur = 20;
+        this.ctx.shadowBlur = 30;
+        this.ctx.fillStyle = this.getTrippyColor();
+        this.ctx.beginPath();
+        this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius + 2, 0, Math.PI * 2);
+        this.ctx.fill();
+        
+        // Main ball
+        this.ctx.shadowBlur = 25;
+        this.ctx.fillStyle = this.getTrippyColor();
         this.ctx.beginPath();
         this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius, 0, Math.PI * 2);
         this.ctx.fill();
         
-        // Add inner glow
+        // Inner glow
         this.ctx.fillStyle = '#fff';
-        this.ctx.globalAlpha = 0.3;
+        this.ctx.globalAlpha = 0.4;
         this.ctx.beginPath();
-        this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius * 0.5, 0, Math.PI * 2);
+        this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius * 0.6, 0, Math.PI * 2);
         this.ctx.fill();
+        
+        // Core
+        this.ctx.fillStyle = '#fff';
+        this.ctx.globalAlpha = 0.8;
+        this.ctx.beginPath();
+        this.ctx.arc(this.ball.x, this.ball.y, this.ball.radius * 0.3, 0, Math.PI * 2);
+        this.ctx.fill();
+        
         this.ctx.restore();
     }
     
