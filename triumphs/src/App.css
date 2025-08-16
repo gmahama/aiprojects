@@ -1,0 +1,160 @@
+/* Zen Garden Misty Forest Background */
+body, #root {
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: 'Lora', 'Noto Serif', serif;
+  background: linear-gradient(180deg, #e6f2e6 0%, #b3c6b3 100%);
+  position: relative;
+  overflow-x: hidden;
+}
+
+.zen-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Mist Animations */
+.zen-mist {
+  position: absolute;
+  width: 120vw;
+  height: 40vh;
+  left: -10vw;
+  top: 0vh;
+  opacity: 0.5;
+  animation: mist-move 32s linear infinite alternate;
+}
+.zen-mist2 {
+  top: 15vh;
+  opacity: 0.35;
+  animation: mist-move2 44s linear infinite alternate;
+}
+@keyframes mist-move {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(60px); }
+}
+@keyframes mist-move2 {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-80px); }
+}
+
+/* Forest Parallax Animation */
+.zen-forest {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 30vh;
+  z-index: 1;
+  animation: forest-parallax 36s ease-in-out infinite alternate;
+}
+@keyframes forest-parallax {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-40px); }
+}
+
+/* Bamboo Sway Animation */
+.zen-bamboo {
+  animation: bamboo-sway 7s ease-in-out infinite alternate;
+  transform-origin: bottom center;
+}
+@keyframes bamboo-sway {
+  0% { transform: rotate(-2deg); }
+  100% { transform: rotate(3deg); }
+}
+
+/* Floating Leaves Animation */
+.zen-leaf {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+  z-index: 3;
+  opacity: 0.7;
+}
+.zen-leaf1 {
+  left: 10vw;
+  top: 0vh;
+  animation: leaf-float1 14s linear infinite;
+}
+.zen-leaf2 {
+  left: 60vw;
+  top: 5vh;
+  animation: leaf-float2 18s linear infinite;
+}
+.zen-leaf3 {
+  left: 30vw;
+  top: -8vh;
+  animation: leaf-float3 20s linear infinite;
+}
+@keyframes leaf-float1 {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+  80% { opacity: 0.7; }
+  100% { transform: translateY(90vh) rotate(120deg); opacity: 0; }
+}
+@keyframes leaf-float2 {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+  80% { opacity: 0.7; }
+  100% { transform: translateY(100vh) rotate(-90deg); opacity: 0; }
+}
+@keyframes leaf-float3 {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
+  80% { opacity: 0.7; }
+  100% { transform: translateY(110vh) rotate(180deg); opacity: 0; }
+}
+
+.zen-leaves {
+  position: absolute;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* App container styling for zen feel */
+.zen-root {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-zen {
+  background: rgba(255,255,255,0.7);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(34, 49, 34, 0.12);
+  max-width: 600px;
+  width: 90vw;
+  margin: 0;
+  padding: 32px 24px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(180,200,180,0.18);
+  z-index: 10;
+  position: relative;
+}
+
+/* Typography */
+h1, h2, h3 {
+  font-family: 'Lora', 'Noto Serif', serif;
+  color: #2e4d2e;
+  letter-spacing: 0.02em;
+}
+
+/* Subtle fade-in for content */
+.fade-in {
+  animation: fadeIn 1.5s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Add more component-specific styles as needed */

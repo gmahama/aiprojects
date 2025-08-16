@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trippy Pong - Acid Trip Edition</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            border: 3px solid #ff00ff;
+            border-radius: 10px;
+            box-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffff, 0 0 90px #ffff00;
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: #000;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 24px;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+            z-index: 10;
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            text-shadow: 0 0 10px #ff00ff;
+            z-index: 10;
+        }
+        
+        .glow {
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #ff00ff, 0 0 20px #00ffff;
+            }
+            to {
+                text-shadow: 0 0 20px #ff00ff, 0 0 30px #00ffff, 0 0 40px #ffff00;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div>Player: <span id="playerScore">0</span></div>
+            <div>AI: <span id="aiScore">0</span></div>
+        </div>
+        <div id="instructions" class="glow">
+            Use W/S keys to move your paddle<br>
+            Press SPACE to start/pause
+        </div>
+    </div>
+    
+    <script src="game.js"></script>
+</body>
+</html> 

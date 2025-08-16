@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pacman 2 Button</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #222;
+      flex-direction: column;
+    }
+    .pacman2-btn {
+      background: none;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 40px;
+      padding: 0;
+    }
+    .hooray2 {
+      color: #ffe600;
+      font-size: 2.5rem;
+      font-family: 'Arial Black', Arial, sans-serif;
+      text-shadow: 2px 2px 8px #000, 0 0 20px #ffe60099;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    .hooray2.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <button class="pacman2-btn" id="pacman2Btn" aria-label="Pacman 2 Button">
+    <svg width="180" height="180" viewBox="0 0 180 180">
+      <!-- Pacman body with mouth (wedge removed) -->
+      <path d="M90,90 L180,60 A90,90 0 1,1 180,120 Z" fill="#ffe600" stroke="#e6c200" stroke-width="4"/>
+      <!-- Pacman body (behind mouth) -->
+      <path d="M90,90 L180,60 A90,90 0 1,0 180,120 Z" fill="#ffe600"/>
+      <!-- Pacman eye -->
+      <ellipse cx="130" cy="65" rx="10" ry="13" fill="#222"/>
+      <ellipse cx="133" cy="62" rx="3" ry="4" fill="#fff" opacity="0.7"/>
+    </svg>
+  </button>
+  <div class="hooray2" id="hoorayText2">hooray!</div>
+  <script>
+    const btn2 = document.getElementById('pacman2Btn');
+    const hooray2 = document.getElementById('hoorayText2');
+    let clickCount = 0;
+    let clickTimer = null;
+    btn2.addEventListener('click', () => {
+      hooray2.classList.add('show');
+      setTimeout(() => {
+        hooray2.classList.remove('show');
+      }, 1200);
+      clickCount++;
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 1500);
+      }
+      if (clickCount === 3) {
+        clearTimeout(clickTimer);
+        window.location.href = 'https://www.google.com';
+      }
+    });
+  </script>
+</body>
+</html> 
