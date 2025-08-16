@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>13F Filing Scraper - Professional SEC EDGAR Analysis Tool</title>
+    <meta name="description" content="Production-quality Python tool for scraping 13F-HR filings from SEC EDGAR with first-time filer detection and holdings filtering">
+    <meta name="keywords" content="13F, SEC, EDGAR, filing scraper, investment analysis, holdings data">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gmahama.github.io/aiprojects/">
+    <meta property="og:title" content="13F Filing Scraper - Professional SEC EDGAR Analysis Tool">
+    <meta property="og:description" content="Production-quality tool for analyzing SEC 13F-HR filings with first-time filer detection and holdings filtering">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://gmahama.github.io/aiprojects/">
+    <meta property="twitter:title" content="13F Filing Scraper - Professional SEC EDGAR Analysis Tool">
+    <meta property="twitter:description" content="Production-quality tool for analyzing SEC 13F-HR filings with first-time filer detection and holdings filtering">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.4rem;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-top: 20px;
+        }
+
+        .cta-buttons {
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+
+        .demo-section h2 {
+            color: #667eea;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 15px;
+            text-align: center;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.7;
+        }
+
+        .demo-form {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 25px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .results {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+            border: 3px solid #4caf50;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 25px 0;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .results h3 {
+            color: #2e7d32;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 3px solid #4caf50;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #2e7d32;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .file-links {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 3px solid #2196f3;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .file-links h3 {
+            color: #1976d2;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            text-align: center;
+        }
+
+        .file-link {
+            display: inline-block;
+            background: #2196f3;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 8px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
+        }
+
+        .file-link:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 25px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 25px 0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 3px solid #ddd;
+            margin-bottom: 25px;
+            background: #f8f9fa;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+        }
+
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+            background: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .github-link {
+            text-align: center;
+            margin: 50px 0;
+        }
+
+        .github-link a {
+            display: inline-block;
+            background: #333;
+            color: white;
+            padding: 18px 35px;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .github-link a:hover {
+            background: #555;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .demo-note {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .demo-note h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .demo-note p {
+            color: #856404;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .demo-section {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 13F Filing Scraper</h1>
+            <p>Professional-grade Python tool for analyzing SEC 13F-HR filings with intelligent first-time filer detection and advanced holdings filtering capabilities.</p>
+            <p class="subtitle">Built for investment professionals, compliance teams, and financial analysts who need reliable, accurate data from SEC EDGAR.</p>
+            
+            <div class="cta-buttons">
+                <a href="#demo" class="btn">🚀 Try Interactive Demo</a>
+                <a href="https://github.com/gmahama/aiprojects/tree/main/13f_scraper" class="btn btn-secondary" target="_blank">📁 View Source Code</a>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🚀 Enterprise Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🔍 <span>First-Time Filer Detection</span></h3>
+                    <p>Automatically identifies funds filing 13F-HR for the first time by analyzing complete filing history from SEC EDGAR databases.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📈 <span>Advanced Holdings Filtering</span></h3>
+                    <p>Filter results by minimum/maximum holdings count, specific ranges, or custom criteria to focus on relevant investment strategies.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🌐 <span>Professional Web Interface</span></h3>
+                    <p>Beautiful, responsive frontend designed for daily use by investment professionals with real-time results and progress tracking.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚡ <span>Enterprise REST API</span></h3>
+                    <p>Programmatic access via FastAPI endpoints for integration with existing systems, dashboards, and automated workflows.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>📊 <span>Comprehensive Data Export</span></h3>
+                    <p>Generate detailed CSV and JSONL files with complete holdings data, filing metadata, and compliance information.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🔄 <span>Intelligent Rate Limiting</span></h3>
+                    <p>Respects SEC EDGAR guidelines (10 requests/second max) with smart caching and retry logic for reliable data collection.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section" id="demo">
+            <h2>🎯 Interactive Demo</h2>
+            <p>Experience the power of the 13F scraper with this interactive demonstration. Try different configurations to see how the tool works:</p>
+            
+            <div class="demo-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="funds">Fund Names (comma-separated):</label>
+                        <input type="text" id="funds" value="Citadel Advisors, AQR Capital Management, Bridgewater Associates" placeholder="Enter fund names...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quarter">Quarter:</label>
+                        <select id="quarter">
+                            <option value="2025Q1">2025 Q1</option>
+                            <option value="2024Q4">2024 Q4</option>
+                            <option value="2024Q3">2024 Q3</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="filterType">Filter Type:</label>
+                        <select id="filterType">
+                            <option value="min">Minimum Holdings</option>
+                            <option value="max">Maximum Holdings</option>
+                            <option value="range">Holdings Range</option>
+                            <option value="none">No Filter</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="filterValueGroup">
+                        <label for="filterValue">Value:</label>
+                        <input type="number" id="filterValue" value="100" min="0">
+                    </div>
+                </div>
+                
+                <div class="form-group" id="rangeGroup" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rangeMin">Range Min:</label>
+                            <input type="number" id="rangeMin" value="50" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="rangeMax">Range Max:</label>
+                            <input type="number" id="rangeMax" value="200" min="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="onlyFirstTime">
+                        <label for="onlyFirstTime">Only First-Time Filers</label>
+                    </div>
+                </div>
+                
+                <div style="text-align: center;">
+                    <button class="btn" onclick="runDemo()">🚀 Run Demo Analysis</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <h3>📊 Analysis Results</h3>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalFunds">0</div>
+                    <div class="stat-label">Funds Processed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="firstTimeFilers">0</div>
+                    <div class="stat-label">First-Time Filers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalHoldings">0</div>
+                    <div class="stat-label">Total Holdings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avgHoldings">0</div>
+                    <div class="stat-label">Avg Holdings</div>
+                </div>
+            </div>
+            
+            <div class="file-links">
+                <h3>📁 Generated Reports</h3>
+                <a href="#" class="file-link" id="summaryFile">📊 Summary Report (CSV)</a>
+                <a href="#" class="file-link" id="holdingsFile">📈 Holdings Data (CSV)</a>
+                <a href="#" class="file-link" id="jsonlFile">🔧 JSON Lines Format</a>
+            </div>
+        </div>
+
+        <div class="demo-note">
+            <h4>💡 Demo Note</h4>
+            <p>This is an interactive demonstration showing the tool's capabilities. In production, the tool connects to live SEC EDGAR data and processes real 13F filings.</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>💻 Professional Usage</h2>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="showTab('cli')">Command Line</div>
+                <div class="tab" onclick="showTab('python')">Python API</div>
+                <div class="tab" onclick="showTab('web')">Web Interface</div>
+            </div>
+            
+            <div class="tab-content active" id="cli">
+                <h3>Command Line Interface</h3>
+                <p>Perfect for automated scripts, batch processing, and integration with existing workflows:</p>
+                <div class="code-block">
+                    <pre># Basic usage
+python3 cli.py scrape --funds "Citadel Advisors" "AQR Capital Management"
+
+# First-time filers only
+python3 cli.py scrape --funds "New Fund LLC" --only-first-time
+
+# Holdings filtering
+python3 cli.py scrape --funds "Large Fund" --min-holdings 100
+python3 cli.py scrape --funds "Small Fund" --between-holdings 10 50
+
+# Batch processing
+python3 cli.py scrape --funds-csv sample_funds.csv --quarter 2024Q4</pre>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="python">
+                <h3>Python API</h3>
+                <p>Integrate directly into your Python applications and data pipelines:</p>
+                <div class="code-block">
+                    <pre>from logic import ThirteenFProcessor
+
+with ThirteenFProcessor() as processor:
+    results = processor.process_funds(
+        funds=["Citadel Advisors"],
+        quarter="2024Q4",
+        min_holdings=100
+    )
+    
+    for result in results:
+        print(f"{result.fund_name}: {result.num_holdings} holdings")
+        print(f"First-time filer: {result.is_first_time_filer}")
+        print(f"Filing URL: {result.filing_url}")</pre>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="web">
+                <h3>Web Interface</h3>
+                <p>User-friendly interface for daily use by investment professionals:</p>
+                <div class="code-block">
+                    <pre># Start the frontend server
+python3 start_frontend.py
+
+# Open your browser to: http://localhost:8000
+
+# Features:
+# - Easy form-based input for fund names, CIKs, or CSV files
+# - Visual results display with statistics and charts
+# - Demo mode to explore functionality
+# - Responsive design for desktop and mobile
+# - Real-time progress tracking</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🔧 Technical Architecture</h2>
+            
+            <h3>Data Sources & APIs</h3>
+            <ul style="margin: 20px 0; padding-left: 20px; line-height: 1.8;">
+                <li><strong>SEC Company Submissions API</strong> - For filing history and metadata retrieval</li>
+                <li><strong>EDGAR Full-Text Search</strong> - For document retrieval and parsing</li>
+                <li><strong>Information Tables</strong> - XML/TXT parsing for detailed holdings data</li>
+                <li><strong>Rate Limiting</strong> - Respects SEC guidelines with intelligent throttling</li>
+            </ul>
+            
+            <h3>Output & Reports</h3>
+            <p>The tool generates comprehensive, professional-grade reports:</p>
+            <ul style="margin: 20px 0; padding-left: 20px; line-height: 1.8;">
+                <li><strong>Summary Report</strong> - Overview of all processed filings with key compliance metrics</li>
+                <li><strong>Holdings Data</strong> - Detailed holdings per fund in CSV format for Excel analysis</li>
+                <li><strong>JSON Lines</strong> - Machine-readable format for data pipelines and APIs</li>
+                <li><strong>Metadata</strong> - Filing URLs, dates, and first-time filer status for audit trails</li>
+            </ul>
+            
+            <h3>Enterprise Features</h3>
+            <ul style="margin: 20px 0; padding-left: 20px; line-height: 1.8;">
+                <li><strong>Error Handling</strong> - Graceful fallback and comprehensive error reporting</li>
+                <li><strong>Data Validation</strong> - Robust validation and cleaning of all parsed data</li>
+                <li><strong>Caching System</strong> - Intelligent caching to reduce redundant API calls</li>
+                <li><strong>Logging</strong> - Comprehensive logging for compliance and debugging</li>
+            </ul>
+        </div>
+
+        <div class="github-link">
+            <a href="https://github.com/gmahama/aiprojects/tree/main/13f_scraper" target="_blank">
+                🚀 Get Full Source Code on GitHub
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Filter type handling
+        document.getElementById('filterType').addEventListener('change', function() {
+            const filterType = this.value;
+            const filterValueGroup = document.getElementById('filterValueGroup');
+            const rangeGroup = document.getElementById('rangeGroup');
+            
+            if (filterType === 'range') {
+                filterValueGroup.style.display = 'none';
+                rangeGroup.style.display = 'block';
+            } else if (filterType === 'none') {
+                filterValueGroup.style.display = 'none';
+                rangeGroup.style.display = 'none';
+            } else {
+                filterValueGroup.style.display = 'block';
+                rangeGroup.style.display = 'none';
+            }
+        });
+
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Demo functionality
+        function runDemo() {
+            const funds = document.getElementById('funds').value.split(',').map(f => f.trim());
+            const quarter = document.getElementById('quarter').value;
+            const filterType = document.getElementById('filterType').value;
+            const onlyFirstTime = document.getElementById('onlyFirstTime').checked;
+            
+            // Simulate processing
+            const results = document.getElementById('results');
+            results.classList.add('show');
+            
+            // Update stats with realistic demo data
+            document.getElementById('totalFunds').textContent = funds.length;
+            document.getElementById('firstTimeFilers').textContent = onlyFirstTime ? Math.floor(funds.length * 0.3) : Math.floor(funds.length * 0.1);
+            document.getElementById('totalHoldings').textContent = funds.length * 150;
+            document.getElementById('avgHoldings').textContent = 150;
+            
+            // Update file links
+            document.getElementById('summaryFile').href = '#';
+            document.getElementById('holdingsFile').href = '#';
+            document.getElementById('jsonlFile').href = '#';
+            
+            // Scroll to results
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
