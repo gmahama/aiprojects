@@ -20,7 +20,7 @@ function normalizeTag(tag: string): string {
  * Deduplicates an array of tags while preserving order.
  */
 function dedupeTags(tags: string[]): string[] {
-  return [...new Set(tags)];
+  return Array.from(new Set(tags));
 }
 
 export function TagInput({ tags, onChange, placeholder = 'Add tag...' }: TagInputProps) {
