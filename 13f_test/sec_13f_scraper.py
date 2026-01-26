@@ -37,6 +37,15 @@ def get_filer_id(cik_or_name):
     if not data or not data.get("filers"):
         print("No filer found for CIK/name.")
         return None
+    
+    # Look for Yaupon Capital Management LP specifically
+    for filer in data["filers"]:
+        if filer["name"] == "YAUPON CAPITAL MANAGEMENT LP":
+            print(f"Found Yaupon Capital Management LP with ID: {filer['id']}")
+            return filer["id"]
+    
+    # If not found, return the first result
+    print(f"Yaupon Capital Management LP not found, using first result: {data['filers'][0]['name']} (ID: {data['filers'][0]['id']})")
     return data["filers"][0]["id"]
 
 def get_holdings(filer_id):
@@ -50,21 +59,37 @@ def get_holdings(filer_id):
     }
     url = API_BASE + "?" + urllib.parse.urlencode(params)
     resp = requests.get(url)
+    print(f"Holdings API Response Status: {resp.status_code}")
+    print(f"Holdings API Response Content: {resp.text}")
     data = resp.json()
-    positions = data.get("results", [])
+    
+    # Navigate the nested structure to get holdings
+    if not data or not data.get("results"):
+        print("No results found in holdings API response.")
+        return
+    
+    if not data["results"][0].get("records"):
+        print("No records found in results.")
+        return
+    
+    if not data["results"][0]["records"][0].get("holdings"):
+        print("No holdings found in records.")
+        return
+    
+    positions = data["results"][0]["records"][0]["holdings"]
     if not positions:
         print("No holdings found.")
         return
+    
     print(f"Current 13F Holdings for filer ID {filer_id}:\n")
     for pos in positions:
-        print(f"{pos.get('stock_name', 'N/A')} (Ticker: {pos.get('stock_ticker', 'N/A')}), Shares: {pos.get('current_shares', 'N/A')}, Value: ${pos.get('current_mv', 'N/A')}")
+        print(f"{pos.get('stock_name', 'N/A')} (Ticker: {pos.get('stock_ticker', 'N/A')}), Shares: {pos.get('current_shares', 'N/A'):,.0f}, Value: ${pos.get('current_mv', 'N/A'):,.0f}")
 
 def main():
-    name = "berkshire"
+    name = "Yaupon"
     filer_id = get_filer_id(name)
     if not filer_id:
         return
-    print(f"Found filer ID: {filer_id}")
     get_holdings(filer_id)
 
 if __name__ == "__main__":
