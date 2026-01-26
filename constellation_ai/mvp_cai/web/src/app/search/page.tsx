@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getPeople, getMeetings, Person, Meeting, ApiError } from '@/lib/api';
@@ -63,7 +63,7 @@ function searchMeetingsClientSide(meetings: Meeting[], query: string): Meeting[]
   });
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -336,5 +336,13 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<LoadingState message="Loading search..." />}>
+      <SearchContent />
+    </Suspense>
   );
 }
