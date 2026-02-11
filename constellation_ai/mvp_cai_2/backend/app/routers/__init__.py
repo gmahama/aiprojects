@@ -1,0 +1,31 @@
+from app.routers import (
+    health,
+    users,
+    organizations,
+    contacts,
+    activities,
+    attachments,
+    tags,
+    followups,
+    search,
+    audit,
+    export,
+    events,
+    document_parsing,
+)
+
+__all__ = [
+    "health",
+    "users",
+    "organizations",
+    "contacts",
+    "activities",
+    "attachments",
+    "tags",
+    "followups",
+    "search",
+    "audit",
+    "export",
+    "events",
+    "document_parsing",
+]

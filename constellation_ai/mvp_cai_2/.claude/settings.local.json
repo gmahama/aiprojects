@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source:*)",
+      "Bash(poetry install:*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(/Users/georgiemahama/Documents/code/aiprojects/constellation_ai/mvp_cai_2/backend/venv/bin/alembic:*)",
+      "Bash(/Users/georgiemahama/Documents/code/aiprojects/constellation_ai/mvp_cai_2/backend/venv/bin/poetry:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(PYTHONPATH=/Users/georgiemahama/Documents/code/aiprojects/constellation_ai/mvp_cai_2/backend /Users/georgiemahama/Documents/code/aiprojects/constellation_ai/mvp_cai_2/backend/venv/bin/python:*)",
+      "Bash(PYTHONPATH=. /Users/georgiemahama/Documents/code/aiprojects/constellation_ai/mvp_cai_2/backend/venv/bin/poetry run python:*)",
+      "Bash(python3:*)",
+      "Bash(ls:*)",
+      "Bash(poetry run alembic:*)",
+      "Bash(npx tsc:*)",
+      "Bash(poetry run python:*)"
+    ]
+  }
+}
