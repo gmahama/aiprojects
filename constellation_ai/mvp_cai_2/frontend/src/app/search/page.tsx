@@ -10,7 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import type { SearchResult } from "@/types";
+
+type EntityTypeFilter = "" | "contact" | "organization" | "activity";
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -20,23 +23,36 @@ function SearchPageContent() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [entityTypeFilter, setEntityTypeFilter] = useState<EntityTypeFilter>("");
 
   useEffect(() => {
     const q = searchParams.get("q");
     if (q) {
       setQuery(q);
-      performSearch(q);
+      performSearch(q, entityTypeFilter);
     }
   }, [searchParams]);
 
-  const performSearch = async (searchQuery: string) => {
+  // Re-search when filter changes (if we have a query)
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      performSearch(q, entityTypeFilter);
+    }
+  }, [entityTypeFilter]);
+
+  const performSearch = async (searchQuery: string, typeFilter: EntityTypeFilter) => {
     if (!searchQuery.trim()) return;
 
     setIsLoading(true);
     setHasSearched(true);
     try {
       const token = await getToken();
-      const res = await api.search(token, { q: searchQuery });
+      const params: Record<string, string> = { q: searchQuery };
+      if (typeFilter) {
+        params.type = typeFilter;
+      }
+      const res = await api.search(token, params);
       setResults(res.items);
     } catch (error) {
       console.error("Search failed:", error);
@@ -78,6 +94,13 @@ function SearchPageContent() {
     }
   };
 
+  const filterButtons: { label: string; value: EntityTypeFilter }[] = [
+    { label: "All", value: "" },
+    { label: "Contacts", value: "contact" },
+    { label: "Organizations", value: "organization" },
+    { label: "Activities", value: "activity" },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Search Form */}
@@ -94,6 +117,25 @@ function SearchPageContent() {
         </div>
       </form>
 
+      {/* Entity Type Filter */}
+      {hasSearched && (
+        <div className="flex gap-2">
+          {filterButtons.map((btn) => (
+            <Button
+              key={btn.value}
+              variant={entityTypeFilter === btn.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setEntityTypeFilter(btn.value)}
+              className={cn(
+                entityTypeFilter === btn.value && "shadow-sm"
+              )}
+            >
+              {btn.label}
+            </Button>
+          ))}
+        </div>
+      )}
+
       {/* Results */}
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
@@ -106,6 +148,7 @@ function SearchPageContent() {
               <SearchIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground">
                 No results found for &quot;{searchParams.get("q")}&quot;
+                {entityTypeFilter && ` in ${entityTypeFilter}s`}
               </p>
             </CardContent>
           </Card>
@@ -113,6 +156,7 @@ function SearchPageContent() {
           <div className="space-y-4">
             <p className="text-muted-foreground">
               Found {results.length} results for &quot;{searchParams.get("q")}&quot;
+              {entityTypeFilter && ` in ${entityTypeFilter}s`}
             </p>
 
             {results.map((result) => (

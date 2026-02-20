@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Globe, Pencil, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Globe, Pencil, Trash2, Users, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import { getClassificationColor } from "@/lib/utils";
-import type { Organization } from "@/types";
+import { getClassificationColor, getActivityTypeColor, formatDateTime } from "@/lib/utils";
+import type { Organization, Activity, PaginatedResponse } from "@/types";
 
 export default function OrganizationDetailPage() {
   const params = useParams();
@@ -29,6 +29,7 @@ export default function OrganizationDetailPage() {
   const orgId = params.id as string;
   const { getToken } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -62,6 +63,28 @@ export default function OrganizationDetailPage() {
 
     fetchOrganization();
   }, [getToken, orgId]);
+
+  // Fetch recent activities for this org's contacts
+  useEffect(() => {
+    async function fetchRecentActivities() {
+      if (!organization?.contacts || organization.contacts.length === 0) return;
+      try {
+        const token = await getToken();
+        const res = (await api.getActivities(token, {
+          page_size: "5",
+          organization_id: orgId,
+        })) as PaginatedResponse<Activity>;
+        setRecentActivities(res.items);
+      } catch (error) {
+        // Fallback: if backend doesn't support organization_id filter, just silently fail
+        console.error("Failed to fetch recent activities:", error);
+      }
+    }
+
+    if (organization) {
+      fetchRecentActivities();
+    }
+  }, [getToken, orgId, organization]);
 
   if (isLoading) {
     return (
@@ -214,8 +237,9 @@ export default function OrganizationDetailPage() {
           )}
         </div>
 
-        {/* Contacts */}
-        <div className="lg:col-span-2">
+        {/* Contacts + Recent Activities */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Contacts */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
@@ -257,6 +281,49 @@ export default function OrganizationDetailPage() {
                               {contact.title}
                             </p>
                           )}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Recent Activities */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Recent Activities
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {recentActivities.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  No recent activities
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivities.map((activity) => (
+                    <Link
+                      key={activity.id}
+                      href={`/activities/${activity.id}`}
+                      className="block"
+                    >
+                      <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border">
+                        <Badge
+                          className={getActivityTypeColor(activity.activity_type)}
+                          variant="secondary"
+                        >
+                          {activity.activity_type}
+                        </Badge>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">{activity.title}</p>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDateTime(activity.occurred_at)}
+                          </p>
                         </div>
                       </div>
                     </Link>

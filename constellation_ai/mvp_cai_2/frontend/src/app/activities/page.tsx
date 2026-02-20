@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { formatDateTime, getActivityTypeColor, getClassificationColor } from "@/lib/utils";
@@ -18,6 +20,11 @@ export default function ActivitiesPage() {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Filters
+  const [activityType, setActivityType] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   const pageSize = 25;
 
   useEffect(() => {
@@ -25,10 +32,20 @@ export default function ActivitiesPage() {
       setIsLoading(true);
       try {
         const token = await getToken();
-        const res = (await api.getActivities(token, {
+        const params: Record<string, string> = {
           page: page.toString(),
           page_size: pageSize.toString(),
-        })) as PaginatedResponse<Activity>;
+        };
+        if (activityType) {
+          params.activity_type = activityType;
+        }
+        if (fromDate) {
+          params.from_date = fromDate;
+        }
+        if (toDate) {
+          params.to_date = toDate;
+        }
+        const res = (await api.getActivities(token, params)) as PaginatedResponse<Activity>;
         setActivities(res.items);
         setTotal(res.total);
       } catch (error) {
@@ -39,9 +56,18 @@ export default function ActivitiesPage() {
     }
 
     fetchActivities();
-  }, [getToken, page]);
+  }, [getToken, page, activityType, fromDate, toDate]);
 
   const totalPages = Math.ceil(total / pageSize);
+
+  const clearFilters = () => {
+    setActivityType("");
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+  };
+
+  const hasFilters = activityType || fromDate || toDate;
 
   return (
     <div className="space-y-6">
@@ -57,6 +83,63 @@ export default function ActivitiesPage() {
             New Activity
           </Button>
         </Link>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Type</label>
+          <Select
+            value={activityType || "__ALL__"}
+            onValueChange={(value) => {
+              setActivityType(value === "__ALL__" ? "" : value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__ALL__">All Types</SelectItem>
+              <SelectItem value="MEETING">Meeting</SelectItem>
+              <SelectItem value="CALL">Call</SelectItem>
+              <SelectItem value="EMAIL">Email</SelectItem>
+              <SelectItem value="NOTE">Note</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">From</label>
+          <Input
+            type="date"
+            value={fromDate}
+            onChange={(e) => {
+              setFromDate(e.target.value);
+              setPage(1);
+            }}
+            className="w-[160px]"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">To</label>
+          <Input
+            type="date"
+            value={toDate}
+            onChange={(e) => {
+              setToDate(e.target.value);
+              setPage(1);
+            }}
+            className="w-[160px]"
+          />
+        </div>
+
+        {hasFilters && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear filters
+          </Button>
+        )}
       </div>
 
       {/* Activities List */}

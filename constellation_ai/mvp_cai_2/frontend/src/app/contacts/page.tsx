@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Building2 } from "lucide-react";
+import { Plus, Search, Building2, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { getClassificationColor } from "@/lib/utils";
-import type { Contact, PaginatedResponse } from "@/types";
+import { TagSelector } from "@/components/tags/TagSelector";
+import type { Contact, Organization, PaginatedResponse } from "@/types";
 
 export default function ContactsPage() {
   const { getToken } = useAuth();
@@ -20,7 +22,29 @@ export default function ContactsPage() {
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Filters
+  const [organizationId, setOrganizationId] = useState("");
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
   const pageSize = 25;
+
+  // Fetch organizations for filter dropdown
+  useEffect(() => {
+    async function fetchOrgs() {
+      try {
+        const token = await getToken();
+        const res = (await api.getOrganizations(token, {
+          page_size: "100",
+        })) as PaginatedResponse<Organization>;
+        setOrganizations(res.items);
+      } catch (error) {
+        console.error("Failed to fetch organizations:", error);
+      }
+    }
+    fetchOrgs();
+  }, [getToken]);
 
   useEffect(() => {
     async function fetchContacts() {
@@ -34,6 +58,12 @@ export default function ContactsPage() {
         if (search) {
           params.search = search;
         }
+        if (organizationId) {
+          params.organization_id = organizationId;
+        }
+        if (selectedTagIds.length > 0) {
+          params.tag_ids = selectedTagIds.join(",");
+        }
         const res = (await api.getContacts(token, params)) as PaginatedResponse<Contact>;
         setContacts(res.items);
         setTotal(res.total);
@@ -45,9 +75,16 @@ export default function ContactsPage() {
     }
 
     fetchContacts();
-  }, [getToken, page, search]);
+  }, [getToken, page, search, organizationId, selectedTagIds]);
 
   const totalPages = Math.ceil(total / pageSize);
+  const hasFilters = organizationId || selectedTagIds.length > 0;
+
+  const clearFilters = () => {
+    setOrganizationId("");
+    setSelectedTagIds([]);
+    setPage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -66,19 +103,87 @@ export default function ContactsPage() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search contacts..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="pl-10"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search contacts..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="pl-10"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          {showFilters ? (
+            <ChevronUp className="h-4 w-4 mr-1" />
+          ) : (
+            <ChevronDown className="h-4 w-4 mr-1" />
+          )}
+          Filters
+          {hasFilters && (
+            <Badge variant="secondary" className="ml-1.5 h-5 px-1.5 text-xs">
+              {(organizationId ? 1 : 0) + (selectedTagIds.length > 0 ? 1 : 0)}
+            </Badge>
+          )}
+        </Button>
       </div>
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <Card>
+          <CardContent className="pt-4 space-y-4">
+            <div className="flex items-end gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">Organization</label>
+                <Select
+                  value={organizationId || "__ALL__"}
+                  onValueChange={(value) => {
+                    setOrganizationId(value === "__ALL__" ? "" : value);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue placeholder="All Organizations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__ALL__">All Organizations</SelectItem>
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        {org.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {hasFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground block mb-2">Tags</label>
+              <TagSelector
+                selectedTagIds={selectedTagIds}
+                onChange={(ids) => {
+                  setSelectedTagIds(ids);
+                  setPage(1);
+                }}
+                compact
+              />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Contacts List */}
       {isLoading ? (

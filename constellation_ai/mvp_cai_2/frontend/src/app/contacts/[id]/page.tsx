@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, Building2, Calendar, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Building2, Calendar, Pencil, Trash2, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import {
@@ -25,6 +33,7 @@ import {
   getClassificationColor,
   getActivityTypeColor,
 } from "@/lib/utils";
+import { TagSelector } from "@/components/tags/TagSelector";
 import type { Contact } from "@/types";
 
 export default function ContactDetailPage() {
@@ -36,6 +45,23 @@ export default function ContactDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Tag management
+  const [showTagDialog, setShowTagDialog] = useState(false);
+  const [editingTagIds, setEditingTagIds] = useState<string[]>([]);
+  const [isSavingTags, setIsSavingTags] = useState(false);
+
+  async function fetchContact() {
+    try {
+      const token = await getToken();
+      const data = await api.getContact(token, contactId);
+      setContact(data);
+    } catch (error) {
+      console.error("Failed to fetch contact:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function handleDelete() {
     try {
@@ -51,19 +77,45 @@ export default function ContactDetailPage() {
     }
   }
 
-  useEffect(() => {
-    async function fetchContact() {
-      try {
-        const token = await getToken();
-        const data = await api.getContact(token, contactId);
-        setContact(data);
-      } catch (error) {
-        console.error("Failed to fetch contact:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  const openTagDialog = () => {
+    setEditingTagIds(contact?.tags?.map((t) => t.id) || []);
+    setShowTagDialog(true);
+  };
 
+  const handleSaveTags = async () => {
+    if (!contact) return;
+    setIsSavingTags(true);
+
+    try {
+      const token = await getToken();
+      const currentTagIds = new Set(contact.tags?.map((t) => t.id) || []);
+      const newTagIds = new Set(editingTagIds);
+
+      // Tags to add (in newTagIds but not in currentTagIds)
+      const toAdd = editingTagIds.filter((id) => !currentTagIds.has(id));
+      // Tags to remove (in currentTagIds but not in newTagIds)
+      const toRemove = (contact.tags || [])
+        .map((t) => t.id)
+        .filter((id) => !newTagIds.has(id));
+
+      if (toAdd.length > 0) {
+        await api.addContactTags(token, contactId, toAdd);
+      }
+
+      for (const tagId of toRemove) {
+        await api.removeContactTag(token, contactId, tagId);
+      }
+
+      setShowTagDialog(false);
+      await fetchContact();
+    } catch (error) {
+      console.error("Failed to save tags:", error);
+    } finally {
+      setIsSavingTags(false);
+    }
+  };
+
+  useEffect(() => {
     fetchContact();
   }, [getToken, contactId]);
 
@@ -197,12 +249,20 @@ export default function ContactDetailPage() {
           </Card>
 
           {/* Tags */}
-          {contact.tags && contact.tags.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Tags</CardTitle>
-              </CardHeader>
-              <CardContent>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                Tags
+              </CardTitle>
+              <Button size="sm" variant="outline" onClick={openTagDialog}>
+                Manage Tags
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {!contact.tags || contact.tags.length === 0 ? (
+                <p className="text-muted-foreground text-sm">No tags</p>
+              ) : (
                 <div className="flex flex-wrap gap-2">
                   {contact.tags.map((tag) => (
                     <Badge key={tag.id} variant="secondary">
@@ -210,9 +270,9 @@ export default function ContactDetailPage() {
                     </Badge>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
 
           {/* Notes */}
           {contact.notes && (
@@ -273,6 +333,32 @@ export default function ContactDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Tag Management Dialog */}
+      <Dialog open={showTagDialog} onOpenChange={setShowTagDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Manage Tags</DialogTitle>
+            <DialogDescription>
+              Select tags for {contact.first_name} {contact.last_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 max-h-[400px] overflow-y-auto">
+            <TagSelector
+              selectedTagIds={editingTagIds}
+              onChange={setEditingTagIds}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTagDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveTags} disabled={isSavingTags}>
+              {isSavingTags ? "Saving..." : "Save Tags"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

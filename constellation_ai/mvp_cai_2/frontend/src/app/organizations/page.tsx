@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { getClassificationColor } from "@/lib/utils";
@@ -19,6 +20,9 @@ export default function OrganizationsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filters
+  const [orgType, setOrgType] = useState("");
 
   const pageSize = 25;
 
@@ -34,6 +38,9 @@ export default function OrganizationsPage() {
         if (search) {
           params.search = search;
         }
+        if (orgType) {
+          params.org_type = orgType;
+        }
         const res = (await api.getOrganizations(token, params)) as PaginatedResponse<Organization>;
         setOrganizations(res.items);
         setTotal(res.total);
@@ -45,7 +52,7 @@ export default function OrganizationsPage() {
     }
 
     fetchOrganizations();
-  }, [getToken, page, search]);
+  }, [getToken, page, search, orgType]);
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -65,19 +72,52 @@ export default function OrganizationsPage() {
         </Link>
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search organizations..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
+      {/* Search + Filter */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search organizations..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="pl-10"
+          />
+        </div>
+        <Select
+          value={orgType || "__ALL__"}
+          onValueChange={(value) => {
+            setOrgType(value === "__ALL__" ? "" : value);
             setPage(1);
           }}
-          className="pl-10"
-        />
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__ALL__">All Types</SelectItem>
+            <SelectItem value="ASSET_MANAGER">Asset Manager</SelectItem>
+            <SelectItem value="BROKER">Broker</SelectItem>
+            <SelectItem value="CONSULTANT">Consultant</SelectItem>
+            <SelectItem value="CORPORATE">Corporate</SelectItem>
+            <SelectItem value="OTHER">Other</SelectItem>
+          </SelectContent>
+        </Select>
+        {orgType && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setOrgType("");
+              setPage(1);
+            }}
+          >
+            Clear filter
+          </Button>
+        )}
       </div>
 
       {/* Organizations List */}

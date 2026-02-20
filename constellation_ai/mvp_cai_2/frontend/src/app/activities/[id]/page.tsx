@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, Calendar, MapPin, Users, Paperclip, CheckSquare, History, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Users, Paperclip, CheckSquare, History, Pencil, Trash2, Plus, Upload, Download, Play, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -19,6 +22,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import {
@@ -28,7 +39,18 @@ import {
   getClassificationColor,
   getFollowUpStatusColor,
 } from "@/lib/utils";
-import type { Activity } from "@/types";
+import type { Activity, User, PaginatedResponse, FollowUpStatus } from "@/types";
+
+const ALLOWED_CONTENT_TYPES = [
+  "application/pdf",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-outlook",
+];
+
+const ALLOWED_EXTENSIONS = [".pdf", ".ppt", ".pptx", ".xls", ".xlsx", ".msg"];
 
 export default function ActivityDetailPage() {
   const params = useParams();
@@ -39,6 +61,34 @@ export default function ActivityDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Follow-up dialog state
+  const [showFollowUpDialog, setShowFollowUpDialog] = useState(false);
+  const [fuDescription, setFuDescription] = useState("");
+  const [fuAssignedTo, setFuAssignedTo] = useState("");
+  const [fuDueDate, setFuDueDate] = useState("");
+  const [fuSubmitting, setFuSubmitting] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+
+  // Attachment upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Follow-up status update
+  const [updatingFollowUpId, setUpdatingFollowUpId] = useState<string | null>(null);
+
+  async function fetchActivity() {
+    try {
+      const token = await getToken();
+      const data = await api.getActivity(token, activityId);
+      setActivity(data);
+    } catch (error) {
+      console.error("Failed to fetch activity:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function handleDelete() {
     try {
@@ -55,20 +105,108 @@ export default function ActivityDetailPage() {
   }
 
   useEffect(() => {
-    async function fetchActivity() {
-      try {
-        const token = await getToken();
-        const data = await api.getActivity(token, activityId);
-        setActivity(data);
-      } catch (error) {
-        console.error("Failed to fetch activity:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     fetchActivity();
   }, [getToken, activityId]);
+
+  // Fetch users for follow-up assignment
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const token = await getToken();
+        const res = (await api.getUsers(token)) as PaginatedResponse<User>;
+        setUsers(res.items);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    }
+    fetchUsers();
+  }, [getToken]);
+
+  // Follow-up creation
+  const handleCreateFollowUp = async () => {
+    if (!fuDescription.trim()) return;
+    setFuSubmitting(true);
+    try {
+      const token = await getToken();
+      const data: Record<string, unknown> = { description: fuDescription.trim() };
+      if (fuAssignedTo && fuAssignedTo !== "__NONE__") {
+        data.assigned_to = fuAssignedTo;
+      }
+      if (fuDueDate) {
+        data.due_date = fuDueDate;
+      }
+      await api.createFollowUp(token, activityId, data);
+      setShowFollowUpDialog(false);
+      setFuDescription("");
+      setFuAssignedTo("");
+      setFuDueDate("");
+      await fetchActivity();
+    } catch (error) {
+      console.error("Failed to create follow-up:", error);
+    } finally {
+      setFuSubmitting(false);
+    }
+  };
+
+  // Follow-up status update
+  const handleUpdateFollowUpStatus = async (followUpId: string, newStatus: FollowUpStatus) => {
+    setUpdatingFollowUpId(followUpId);
+    try {
+      const token = await getToken();
+      await api.updateFollowUp(token, followUpId, { status: newStatus });
+      await fetchActivity();
+    } catch (error) {
+      console.error("Failed to update follow-up:", error);
+    } finally {
+      setUpdatingFollowUpId(null);
+    }
+  };
+
+  // Attachment upload
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+
+    // Validate file types
+    const invalidFiles = fileArray.filter((f) => {
+      const ext = "." + f.name.split(".").pop()?.toLowerCase();
+      return !ALLOWED_EXTENSIONS.includes(ext);
+    });
+
+    if (invalidFiles.length > 0) {
+      setUploadError(
+        `Invalid file type(s): ${invalidFiles.map((f) => f.name).join(", ")}. Allowed: ${ALLOWED_EXTENSIONS.join(", ")}`
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const token = await getToken();
+      await api.uploadAttachments(token, activityId, fileArray);
+      await fetchActivity();
+    } catch (error) {
+      console.error("Failed to upload attachments:", error);
+      setUploadError("Failed to upload. Please try again.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  // Authenticated download
+  const handleDownload = async (attachmentId: string, filename: string) => {
+    try {
+      const token = await getToken();
+      await api.downloadAttachment(token, attachmentId, filename);
+    } catch (error) {
+      console.error("Failed to download attachment:", error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -214,7 +352,10 @@ export default function ActivityDetailPage() {
                 <CheckSquare className="h-5 w-5" />
                 Follow-ups ({activity.followups?.length || 0})
               </CardTitle>
-              <Button size="sm">Add Follow-up</Button>
+              <Button size="sm" onClick={() => setShowFollowUpDialog(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Follow-up
+              </Button>
             </CardHeader>
             <CardContent>
               {!activity.followups || activity.followups.length === 0 ? (
@@ -242,6 +383,30 @@ export default function ActivityDetailPage() {
                             <span>Due: {followup.due_date}</span>
                           )}
                         </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {followup.status === "OPEN" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={updatingFollowUpId === followup.id}
+                            onClick={() => handleUpdateFollowUpStatus(followup.id, "IN_PROGRESS")}
+                            title="Start"
+                          >
+                            <Play className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {followup.status === "IN_PROGRESS" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={updatingFollowUpId === followup.id}
+                            onClick={() => handleUpdateFollowUpStatus(followup.id, "COMPLETED")}
+                            title="Complete"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -317,24 +482,46 @@ export default function ActivityDetailPage() {
 
           {/* Attachments */}
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Paperclip className="h-5 w-5" />
                 Attachments ({activity.attachments?.length || 0})
               </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                {isUploading ? "Uploading..." : "Upload"}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept={ALLOWED_EXTENSIONS.join(",")}
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </CardHeader>
             <CardContent>
+              {uploadError && (
+                <div className="p-2 text-xs text-red-600 bg-red-50 rounded-md mb-3">
+                  {uploadError}
+                </div>
+              )}
               {!activity.attachments || activity.attachments.length === 0 ? (
                 <p className="text-muted-foreground text-sm">No attachments</p>
               ) : (
                 <div className="space-y-2">
                   {activity.attachments.map((attachment) => (
-                    <a
+                    <button
                       key={attachment.id}
-                      href={api.getAttachmentDownloadUrl(attachment.id)}
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => handleDownload(attachment.id, attachment.filename)}
+                      className="w-full flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
                     >
-                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">
                           {attachment.filename}
@@ -343,7 +530,8 @@ export default function ActivityDetailPage() {
                           {formatFileSize(attachment.file_size_bytes)}
                         </p>
                       </div>
-                    </a>
+                      <Download className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </button>
                   ))}
                 </div>
               )}
@@ -378,6 +566,63 @@ export default function ActivityDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Follow-up Creation Dialog */}
+      <Dialog open={showFollowUpDialog} onOpenChange={setShowFollowUpDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Follow-up</DialogTitle>
+            <DialogDescription>
+              Create a new follow-up action item for this activity.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Description *</Label>
+              <Input
+                value={fuDescription}
+                onChange={(e) => setFuDescription(e.target.value)}
+                placeholder="What needs to be done?"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Assign to</Label>
+              <Select value={fuAssignedTo || "__NONE__"} onValueChange={setFuAssignedTo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select user..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__NONE__">Unassigned</SelectItem>
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Due date</Label>
+              <Input
+                type="date"
+                value={fuDueDate}
+                onChange={(e) => setFuDueDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowFollowUpDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCreateFollowUp}
+              disabled={!fuDescription.trim() || fuSubmitting}
+            >
+              {fuSubmitting ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

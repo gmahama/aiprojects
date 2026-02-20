@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText } from "lucide-react";
+import { FileText, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
-import type { AuditEntry, AuditAction, PaginatedResponse } from "@/types";
+import type { AuditEntry, AuditAction, User, PaginatedResponse } from "@/types";
 
 export default function AuditLogPage() {
   const { getToken, user } = useAuth();
@@ -19,9 +19,30 @@ export default function AuditLogPage() {
   const [actionFilter, setActionFilter] = useState<AuditAction | "">("");
   const [entityTypeFilter, setEntityTypeFilter] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [userMap, setUserMap] = useState<Map<string, string>>(new Map());
 
   const pageSize = 50;
   const isAdmin = user?.role === "ADMIN";
+
+  // Fetch users for display name mapping
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    async function fetchUsers() {
+      try {
+        const token = await getToken();
+        const res = (await api.getUsers(token, 1, 100)) as PaginatedResponse<User>;
+        const map = new Map<string, string>();
+        res.items.forEach((u) => map.set(u.id, u.display_name));
+        setUserMap(map);
+      } catch (error) {
+        console.error("Failed to fetch users:", error);
+      }
+    }
+
+    fetchUsers();
+  }, [getToken, isAdmin]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -62,6 +83,18 @@ export default function AuditLogPage() {
       DELETE: "bg-red-100 text-red-800",
     };
     return colors[action] || "bg-gray-100 text-gray-800";
+  };
+
+  const toggleRow = (id: string) => {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   if (!isAdmin) {
@@ -148,6 +181,8 @@ export default function AuditLogPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-8">
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Timestamp
                   </th>
@@ -166,40 +201,89 @@ export default function AuditLogPage() {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {entries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">
-                      {formatDateTime(entry.created_at)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge className={getActionColor(entry.action)} variant="secondary">
-                        {entry.action}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span className="capitalize">{entry.entity_type}</span>
-                      <br />
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {entry.entity_id.slice(0, 8)}...
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {entry.user_id ? (
-                        <span className="font-mono text-xs">
-                          {entry.user_id.slice(0, 8)}...
+                {entries.map((entry) => {
+                  const isExpanded = expandedRows.has(entry.id);
+                  const hasDetails = entry.details && Object.keys(entry.details).length > 0;
+                  return (
+                    <tr key={entry.id} className="group">
+                      <td className="px-4 py-3" colSpan={hasDetails ? undefined : 1}>
+                        {hasDetails ? (
+                          <button
+                            onClick={() => toggleRow(entry.id)}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </button>
+                        ) : (
+                          <span className="w-4 h-4 block" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {formatDateTime(entry.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge className={getActionColor(entry.action)} variant="secondary">
+                          {entry.action}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <span className="capitalize">{entry.entity_type}</span>
+                        <br />
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {entry.entity_id.slice(0, 8)}...
                         </span>
-                      ) : (
-                        <span className="text-muted-foreground">System</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-mono">
-                      {entry.ip_address || "-"}
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {entry.user_id ? (
+                          <span>
+                            {userMap.get(entry.user_id) || (
+                              <span className="font-mono text-xs">
+                                {entry.user_id.slice(0, 8)}...
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">System</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-mono">
+                        {entry.ip_address || "-"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+
+            {/* Expanded details - render outside tbody for simplicity, use separate rendering */}
           </div>
+
+          {/* Expanded details panels */}
+          {entries
+            .filter((entry) => expandedRows.has(entry.id) && entry.details && Object.keys(entry.details).length > 0)
+            .map((entry) => (
+              <div
+                key={`details-${entry.id}`}
+                className="border rounded-lg p-4 bg-gray-50"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge className={getActionColor(entry.action)} variant="secondary">
+                    {entry.action}
+                  </Badge>
+                  <span className="text-sm capitalize">{entry.entity_type}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDateTime(entry.created_at)}
+                  </span>
+                </div>
+                <pre className="text-xs bg-white p-3 rounded border overflow-x-auto max-h-60">
+                  {JSON.stringify(entry.details, null, 2)}
+                </pre>
+              </div>
+            ))}
 
           {/* Pagination */}
           {totalPages > 1 && (

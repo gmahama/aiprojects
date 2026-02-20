@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     azure_storage_container: str = "constellation-attachments"
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
 
     # Document Parsing / Claude API
     anthropic_api_key: str = ""
