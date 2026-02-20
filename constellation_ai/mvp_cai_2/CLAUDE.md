@@ -1,5 +1,13 @@
 # Constellation AI — Claude Code One-Shot Build Instructions
 
+# Git Setup (IMPORTANT)
+- The git root is **not** this directory — it is `/Users/georgiemahama/Documents/code/aiprojects`
+- All git commands must use: `git -C /Users/georgiemahama/Documents/code/aiprojects`
+- All paths in git commands must be prefixed with `constellation_ai/mvp_cai_2/`
+- The root `.gitignore` contains `lib/` which blocks `frontend/src/lib/` — use `git add -f` for files in that directory
+- Sibling projects exist in the repo (`vinyl/`, `13f-scraper-clean`, etc.) — always stage files explicitly by name, never use `git add -A` or `git add .`
+- The backend venv is at `backend/.venv/` — use `.venv/bin/alembic` and `.venv/bin/python` for backend commands
+
 # Project Conventions
 - Python: use async/await everywhere, type hints required
 - Always run `alembic upgrade head` after schema changes
