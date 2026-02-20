@@ -7,6 +7,9 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { AttendeeSelector } from "@/components/events/AttendeeSelector";
@@ -120,7 +123,7 @@ export default function NewEventPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium">Event Name *</label>
+                <Label>Event Name *</Label>
                 <Input
                   required
                   value={formData.name}
@@ -132,27 +135,30 @@ export default function NewEventPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Event Type *</label>
-                <select
-                  required
+                <Label>Event Type *</Label>
+                <Select
                   value={formData.event_type}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      event_type: e.target.value as EventType,
+                      event_type: value as EventType,
                     })
                   }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="RETREAT">Retreat</option>
-                  <option value="DINNER">Dinner</option>
-                  <option value="LUNCH">Lunch</option>
-                  <option value="OTHER">Other</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="RETREAT">Retreat</SelectItem>
+                    <SelectItem value="DINNER">Dinner</SelectItem>
+                    <SelectItem value="LUNCH">Lunch</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Date & Time *</label>
+                <Label>Date & Time *</Label>
                 <Input
                   type="datetime-local"
                   required
@@ -164,7 +170,7 @@ export default function NewEventPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Location</label>
+                <Label>Location</Label>
                 <Input
                   value={formData.location}
                   onChange={(e) =>
@@ -175,47 +181,49 @@ export default function NewEventPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Classification</label>
-                <select
+                <Label>Classification</Label>
+                <Select
                   value={formData.classification}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     setFormData({
                       ...formData,
-                      classification: e.target.value as Classification,
+                      classification: value as Classification,
                     })
                   }
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value="INTERNAL">Internal</option>
-                  <option value="CONFIDENTIAL">Confidential</option>
-                  <option value="RESTRICTED">Restricted</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Classification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="INTERNAL">Internal</SelectItem>
+                    <SelectItem value="CONFIDENTIAL">Confidential</SelectItem>
+                    <SelectItem value="RESTRICTED">Restricted</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
+              <Label>Description</Label>
+              <Textarea
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder="Event description (supports markdown)"
                 rows={3}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Notes</label>
-              <textarea
+              <Label>Notes</Label>
+              <Textarea
                 value={formData.notes}
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
                 placeholder="Additional notes"
                 rows={3}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               />
             </div>
           </CardContent>

@@ -6,6 +6,7 @@ import { CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { getFollowUpStatusColor } from "@/lib/utils";
@@ -105,20 +106,24 @@ export default function FollowUpsPage() {
           )}
         </div>
 
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value as FollowUpStatus | "");
+        <Select
+          value={statusFilter || "__ALL__"}
+          onValueChange={(value) => {
+            setStatusFilter(value === "__ALL__" ? "" : value as FollowUpStatus);
             setPage(1);
           }}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
         >
-          <option value="">All Statuses</option>
-          <option value="OPEN">Open</option>
-          <option value="IN_PROGRESS">In Progress</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__ALL__">All Statuses</SelectItem>
+            <SelectItem value="OPEN">Open</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Follow-ups List */}

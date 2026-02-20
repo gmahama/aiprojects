@@ -2,17 +2,27 @@ import asyncio
 import pytest
 from typing import AsyncGenerator
 from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.ext.asyncio import (
+    create_async_engine,
+    AsyncSession,
+    async_sessionmaker,
+)
+from sqlalchemy import text
 
-from app.main import app
+from app.main import app as fastapi_app
 from app.database import Base, get_db
 from app.dependencies import get_current_user
 from app.models.user import User, UserRole
 
+# Import all models so that Base.metadata knows about them
+import app.models  # noqa: F401
 
-# Test database URL - use in-memory SQLite for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+app = fastapi_app
+
+# Use the Docker Compose PostgreSQL instance for tests.
+TEST_DATABASE_URL = (
+    "postgresql+asyncpg://constellation:constellation_dev@localhost:5432/constellation"
+)
 
 
 @pytest.fixture(scope="session")
@@ -25,23 +35,24 @@ def event_loop():
 
 @pytest.fixture(scope="function")
 async def test_engine():
-    """Create test database engine."""
-    engine = create_async_engine(
-        TEST_DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+    """Create a fresh engine per test and ensure tables exist."""
+    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+    # Ensure all tables exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    yield engine
+    # Truncate all tables for a clean state
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        table_names = [table.name for table in reversed(Base.metadata.sorted_tables)]
+        if table_names:
+            tables_str = ", ".join(table_names)
+            await conn.execute(text(f"TRUNCATE TABLE {tables_str} CASCADE"))
+    yield engine
     await engine.dispose()
 
 
 @pytest.fixture(scope="function")
 async def test_session(test_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create test database session."""
+    """Create a database session for each test."""
     async_session = async_sessionmaker(
         test_engine, class_=AsyncSession, expire_on_commit=False
     )
@@ -65,7 +76,9 @@ async def test_user(test_session: AsyncSession) -> User:
 
 
 @pytest.fixture(scope="function")
-async def client(test_session: AsyncSession, test_user: User) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    test_session: AsyncSession, test_user: User
+) -> AsyncGenerator[AsyncClient, None]:
     """Create test client with mocked dependencies."""
 
     async def override_get_db():
@@ -78,8 +91,7 @@ async def client(test_session: AsyncSession, test_user: User) -> AsyncGenerator[
     app.dependency_overrides[get_current_user] = override_get_current_user
 
     async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         yield ac
 

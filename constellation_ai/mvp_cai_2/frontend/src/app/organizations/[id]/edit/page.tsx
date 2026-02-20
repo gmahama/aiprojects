@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import type { Classification, OrgType } from "@/types";
+import type { Classification, OrgType, Organization } from "@/types";
 
-export default function NewOrganizationPage() {
+export default function EditOrganizationPage() {
+  const params = useParams();
+  const orgId = params.id as string;
   const router = useRouter();
   const { getToken } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +32,30 @@ export default function NewOrganizationPage() {
     notes: "",
   });
 
+  useEffect(() => {
+    async function fetchOrganization() {
+      try {
+        const token = await getToken();
+        const data: Organization = await api.getOrganization(token, orgId);
+        setFormData({
+          name: data.name,
+          short_name: data.short_name || "",
+          org_type: data.org_type || "",
+          website: data.website || "",
+          classification: data.classification,
+          notes: data.notes || "",
+        });
+      } catch (err) {
+        console.error("Failed to fetch organization:", err);
+        setError("Failed to load organization data.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchOrganization();
+  }, [getToken, orgId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -36,28 +63,36 @@ export default function NewOrganizationPage() {
 
     try {
       const token = await getToken();
-      const organization = await api.createOrganization(token, {
+      await api.updateOrganization(token, orgId, {
         ...formData,
         org_type: formData.org_type || undefined,
       });
-      router.push(`/organizations/${organization.id}`);
+      router.push(`/organizations/${orgId}`);
     } catch (err) {
-      setError("Failed to create organization. Please try again.");
+      setError("Failed to update organization. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/organizations">
+        <Link href={`/organizations/${orgId}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">New Organization</h1>
+        <h1 className="text-2xl font-bold">Edit Organization</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -169,13 +204,13 @@ export default function NewOrganizationPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <Link href="/organizations">
+              <Link href={`/organizations/${orgId}`}>
                 <Button type="button" variant="outline">
                   Cancel
                 </Button>
               </Link>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Organization"}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </CardContent>

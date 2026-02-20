@@ -193,10 +193,14 @@ async def get_tag_usage(
         select(func.count()).select_from(ActivityTag).where(ActivityTag.tag_id == tag_id)
     )
 
+    contacts = contact_count.scalar() or 0
+    organizations = org_count.scalar() or 0
+    activities = activity_count.scalar() or 0
+
     return {
         "tag_id": tag_id,
-        "contacts": contact_count.scalar(),
-        "organizations": org_count.scalar(),
-        "activities": activity_count.scalar(),
-        "total": contact_count.scalar() + org_count.scalar() + activity_count.scalar(),
+        "contacts": contacts,
+        "organizations": organizations,
+        "activities": activities,
+        "total": contacts + organizations + activities,
     }

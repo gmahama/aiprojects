@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import type { Classification, Organization, PaginatedResponse } from "@/types";
+import type { Classification, Organization, PaginatedResponse, Contact } from "@/types";
 
-export default function NewContactPage() {
+export default function EditContactPage() {
   const router = useRouter();
+  const params = useParams();
+  const contactId = params.id as string;
   const { getToken } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -33,17 +36,37 @@ export default function NewContactPage() {
   });
 
   useEffect(() => {
-    async function fetchOrganizations() {
+    async function fetchData() {
       try {
         const token = await getToken();
-        const res = (await api.getOrganizations(token, { page_size: "100" })) as PaginatedResponse<Organization>;
-        setOrganizations(res.items);
-      } catch (error) {
-        console.error("Failed to fetch organizations:", error);
+
+        const [contactData, orgsRes] = await Promise.all([
+          api.getContact(token, contactId) as Promise<Contact>,
+          api.getOrganizations(token, { page_size: "100" }) as Promise<PaginatedResponse<Organization>>,
+        ]);
+
+        setOrganizations(orgsRes.items);
+
+        setFormData({
+          first_name: contactData.first_name ?? "",
+          last_name: contactData.last_name ?? "",
+          email: contactData.email ?? "",
+          phone: contactData.phone ?? "",
+          title: contactData.title ?? "",
+          organization_id: contactData.organization_id ?? "",
+          classification: contactData.classification ?? "INTERNAL",
+          notes: contactData.notes ?? "",
+        });
+      } catch (err) {
+        console.error("Failed to fetch contact:", err);
+        setError("Failed to load contact data. Please try again.");
+      } finally {
+        setIsLoading(false);
       }
     }
-    fetchOrganizations();
-  }, [getToken]);
+
+    fetchData();
+  }, [getToken, contactId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,28 +75,36 @@ export default function NewContactPage() {
 
     try {
       const token = await getToken();
-      const contact = await api.createContact(token, {
+      await api.updateContact(token, contactId, {
         ...formData,
         organization_id: formData.organization_id || undefined,
       });
-      router.push(`/contacts/${contact.id}`);
+      router.push(`/contacts/${contactId}`);
     } catch (err) {
-      setError("Failed to create contact. Please try again.");
+      setError("Failed to update contact. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/contacts">
+        <Link href={`/contacts/${contactId}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">New Contact</h1>
+        <h1 className="text-2xl font-bold">Edit Contact</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -205,13 +236,13 @@ export default function NewContactPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <Link href="/contacts">
+              <Link href={`/contacts/${contactId}`}>
                 <Button type="button" variant="outline">
                   Cancel
                 </Button>
               </Link>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Contact"}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </CardContent>

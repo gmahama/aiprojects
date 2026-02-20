@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,21 +12,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
-import { DocumentUpload } from "@/components/activities/DocumentUpload";
-import type { ActivityType, Classification, ExtractedActivityData, ExtractedPerson } from "@/types";
+import type { Activity, ActivityType, Classification } from "@/types";
 
-export default function NewActivityPage() {
+export default function EditActivityPage() {
+  const params = useParams();
+  const activityId = params.id as string;
   const router = useRouter();
   const { getToken } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [extractedPersons, setExtractedPersons] = useState<ExtractedPerson[]>([]);
-  const [extractedOrganizations, setExtractedOrganizations] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     title: "",
     activity_type: "MEETING" as ActivityType,
-    occurred_at: new Date().toISOString().slice(0, 16),
+    occurred_at: "",
     location: "",
     description: "",
     summary: "",
@@ -34,25 +34,33 @@ export default function NewActivityPage() {
     classification: "INTERNAL" as Classification,
   });
 
-  const handleDocumentExtracted = (data: ExtractedActivityData) => {
-    setFormData((prev) => ({
-      ...prev,
-      title: data.title || prev.title,
-      location: data.location || prev.location,
-      summary: data.summary || prev.summary,
-      key_points: data.key_points || prev.key_points,
-      occurred_at: data.occurred_at
-        ? data.occurred_at.slice(0, 16)
-        : prev.occurred_at,
-    }));
+  useEffect(() => {
+    async function fetchActivity() {
+      try {
+        const token = await getToken();
+        const data: Activity = await api.getActivity(token, activityId);
+        setFormData({
+          title: data.title || "",
+          activity_type: data.activity_type,
+          occurred_at: data.occurred_at
+            ? new Date(data.occurred_at).toISOString().slice(0, 16)
+            : "",
+          location: data.location || "",
+          description: data.description || "",
+          summary: data.summary || "",
+          key_points: data.key_points || "",
+          classification: data.classification,
+        });
+      } catch (err) {
+        console.error("Failed to fetch activity:", err);
+        setError("Failed to load activity data.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-    if (data.persons.length > 0) {
-      setExtractedPersons(data.persons);
-    }
-    if (data.organizations.length > 0) {
-      setExtractedOrganizations(data.organizations);
-    }
-  };
+    fetchActivity();
+  }, [getToken, activityId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,79 +69,37 @@ export default function NewActivityPage() {
 
     try {
       const token = await getToken();
-      const activity = await api.createActivity(token, {
+      await api.updateActivity(token, activityId, {
         ...formData,
         occurred_at: new Date(formData.occurred_at).toISOString(),
       });
-      router.push(`/activities/${activity.id}`);
+      router.push(`/activities/${activityId}`);
     } catch (err) {
-      setError("Failed to create activity. Please try again.");
+      setError("Failed to update activity. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="h-8 w-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/activities">
+        <Link href={`/activities/${activityId}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">New Activity</h1>
+        <h1 className="text-2xl font-bold">Edit Activity</h1>
       </div>
-
-      {/* Document Upload Section */}
-      <DocumentUpload onExtracted={handleDocumentExtracted} />
-
-      {/* Extracted People/Organizations Display */}
-      {(extractedPersons.length > 0 || extractedOrganizations.length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Extracted Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {extractedPersons.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">People Mentioned</h4>
-                <div className="flex flex-wrap gap-2">
-                  {extractedPersons.map((person, idx) => (
-                    <div
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-800 rounded-md text-sm"
-                    >
-                      <span className="font-medium">{person.name}</span>
-                      {person.organization && (
-                        <span className="text-blue-600">({person.organization})</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Link these people as attendees after creating the activity.
-                </p>
-              </div>
-            )}
-            {extractedOrganizations.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium mb-2">Organizations</h4>
-                <div className="flex flex-wrap gap-2">
-                  {extractedOrganizations.map((org, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex px-2 py-1 bg-gray-100 text-gray-800 rounded-md text-sm"
-                    >
-                      {org}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       <form onSubmit={handleSubmit}>
         <Card>
@@ -179,6 +145,8 @@ export default function NewActivityPage() {
                     <SelectItem value="CALL">Call</SelectItem>
                     <SelectItem value="EMAIL">Email</SelectItem>
                     <SelectItem value="NOTE">Note</SelectItem>
+                    <SelectItem value="LLM_INTERACTION">LLM Interaction</SelectItem>
+                    <SelectItem value="SLACK_NOTE">Slack Note</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -266,13 +234,13 @@ export default function NewActivityPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
-              <Link href="/activities">
+              <Link href={`/activities/${activityId}`}>
                 <Button type="button" variant="outline">
                   Cancel
                 </Button>
               </Link>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Activity"}
+                {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </CardContent>

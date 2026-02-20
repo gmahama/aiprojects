@@ -5,6 +5,7 @@ import { FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { formatDateTime } from "@/lib/utils";
@@ -87,36 +88,44 @@ export default function AuditLogPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-4">
-        <select
-          value={actionFilter}
-          onChange={(e) => {
-            setActionFilter(e.target.value as AuditAction | "");
+        <Select
+          value={actionFilter || "__ALL__"}
+          onValueChange={(value) => {
+            setActionFilter(value === "__ALL__" ? "" : value as AuditAction);
             setPage(1);
           }}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
         >
-          <option value="">All Actions</option>
-          <option value="CREATE">Create</option>
-          <option value="READ">Read</option>
-          <option value="UPDATE">Update</option>
-          <option value="DELETE">Delete</option>
-        </select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Actions" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__ALL__">All Actions</SelectItem>
+            <SelectItem value="CREATE">Create</SelectItem>
+            <SelectItem value="READ">Read</SelectItem>
+            <SelectItem value="UPDATE">Update</SelectItem>
+            <SelectItem value="DELETE">Delete</SelectItem>
+          </SelectContent>
+        </Select>
 
-        <select
-          value={entityTypeFilter}
-          onChange={(e) => {
-            setEntityTypeFilter(e.target.value);
+        <Select
+          value={entityTypeFilter || "__ALL__"}
+          onValueChange={(value) => {
+            setEntityTypeFilter(value === "__ALL__" ? "" : value);
             setPage(1);
           }}
-          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
         >
-          <option value="">All Entity Types</option>
-          <option value="contact">Contact</option>
-          <option value="organization">Organization</option>
-          <option value="activity">Activity</option>
-          <option value="attachment">Attachment</option>
-          <option value="followup">Follow-up</option>
-        </select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Entity Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__ALL__">All Entity Types</SelectItem>
+            <SelectItem value="contact">Contact</SelectItem>
+            <SelectItem value="organization">Organization</SelectItem>
+            <SelectItem value="activity">Activity</SelectItem>
+            <SelectItem value="attachment">Attachment</SelectItem>
+            <SelectItem value="followup">Follow-up</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Audit Log */}

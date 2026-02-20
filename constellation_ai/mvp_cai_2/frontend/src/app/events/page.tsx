@@ -6,6 +6,8 @@ import { Plus, Calendar, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import { formatDateTime, getEventTypeColor, getClassificationColor, formatEventType } from "@/lib/utils";
@@ -67,21 +69,25 @@ export default function EventsPage() {
       {/* Filters */}
       <div className="flex gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium">Event Type</label>
-          <select
-            value={eventTypeFilter}
-            onChange={(e) => {
-              setEventTypeFilter(e.target.value as EventType | "");
+          <Label>Event Type</Label>
+          <Select
+            value={eventTypeFilter || "__ALL__"}
+            onValueChange={(value) => {
+              setEventTypeFilter(value === "__ALL__" ? "" : value as EventType);
               setPage(1);
             }}
-            className="flex h-10 w-48 rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
-            <option value="">All Types</option>
-            <option value="RETREAT">Retreat</option>
-            <option value="DINNER">Dinner</option>
-            <option value="LUNCH">Lunch</option>
-            <option value="OTHER">Other</option>
-          </select>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__ALL__">All Types</SelectItem>
+              <SelectItem value="RETREAT">Retreat</SelectItem>
+              <SelectItem value="DINNER">Dinner</SelectItem>
+              <SelectItem value="LUNCH">Lunch</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

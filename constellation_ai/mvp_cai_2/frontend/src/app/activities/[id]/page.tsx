@@ -1,13 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { ArrowLeft, Calendar, MapPin, Users, Paperclip, CheckSquare, History } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Users, Paperclip, CheckSquare, History, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { api } from "@/lib/api";
 import {
@@ -21,10 +32,27 @@ import type { Activity } from "@/types";
 
 export default function ActivityDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const activityId = params.id as string;
   const { getToken } = useAuth();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDelete() {
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      const token = await getToken();
+      await api.deleteActivity(token, activityId);
+      router.push("/activities");
+    } catch (error) {
+      console.error("Failed to delete activity:", error);
+      setDeleteError(error instanceof Error ? error.message : "Failed to delete activity");
+      setIsDeleting(false);
+    }
+  }
 
   useEffect(() => {
     async function fetchActivity() {
@@ -99,8 +127,46 @@ export default function ActivityDetailPage() {
             )}
           </div>
         </div>
-        <Button variant="outline">Edit</Button>
+        <div className="flex items-center gap-2">
+          <Link href={`/activities/${activityId}/edit`}>
+            <Button variant="outline">
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </Link>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" disabled={isDeleting}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete {activity.title}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently remove this activity from the system.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
+
+      {deleteError && (
+        <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+          {deleteError}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Content */}
