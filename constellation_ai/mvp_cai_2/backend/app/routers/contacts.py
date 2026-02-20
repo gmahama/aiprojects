@@ -128,7 +128,19 @@ async def create_contact(
     )
 
     await db.commit()
-    await db.refresh(contact)
+
+    # Re-query with eager loading to avoid async lazy-load issues
+    stmt = (
+        select(Contact)
+        .where(Contact.id == contact.id)
+        .options(
+            selectinload(Contact.organization),
+            selectinload(Contact.owner),
+            selectinload(Contact.tags).selectinload(ContactTag.tag),
+        )
+    )
+    result = await db.execute(stmt)
+    contact = result.scalar_one()
 
     return contact
 

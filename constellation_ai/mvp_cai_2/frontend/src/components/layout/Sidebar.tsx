@@ -8,6 +8,7 @@ import {
   Building2,
   Calendar,
   CalendarDays,
+  GitBranch,
   CheckSquare,
   Search,
   Settings,
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Organizations", href: "/organizations", icon: Building2 },
   { name: "Activities", href: "/activities", icon: Calendar },
   { name: "Events", href: "/events", icon: CalendarDays },
+  { name: "Pipeline", href: "/pipeline", icon: GitBranch },
   { name: "Follow-ups", href: "/followups", icon: CheckSquare },
   { name: "Search", href: "/search", icon: Search },
 ];

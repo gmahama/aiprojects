@@ -23,6 +23,7 @@ from app.models.contact import Contact
 from app.models.tag import TagSet, Tag, ContactTag, OrganizationTag, ActivityTag
 from app.models.activity import Activity, ActivityType, ActivityAttendee
 from app.models.followup import FollowUp, FollowUpStatus
+from app.models.pipeline import PipelineItem, PipelineStageHistory, PipelineStatus
 
 
 async def seed_database():
@@ -586,6 +587,166 @@ async def seed_database():
         for followup in followups:
             db.add(followup)
 
+        await db.flush()
+
+        # Create pipeline items
+        print("  Creating pipeline items...")
+        pipeline_items = []
+
+        # Item 1: Blackstone — ACTIVE at stage 2 (Quantitative Diligence)
+        pi1 = PipelineItem(
+            id=uuid4(),
+            organization_id=organizations[0].id,
+            primary_contact_id=contacts[0].id,
+            stage=2,
+            status=PipelineStatus.ACTIVE,
+            owner_id=manager.id,
+            created_by=manager.id,
+            notes="Strong interest after Q4 review. Moving to quant diligence.",
+            entered_pipeline_at=now - timedelta(days=45),
+            last_stage_change_at=now - timedelta(days=15),
+        )
+        pipeline_items.append(pi1)
+
+        # Item 2: GSAM — ACTIVE at stage 4 (Live Diligence)
+        pi2 = PipelineItem(
+            id=uuid4(),
+            organization_id=organizations[1].id,
+            primary_contact_id=contacts[2].id,
+            stage=4,
+            status=PipelineStatus.ACTIVE,
+            owner_id=analyst.id,
+            created_by=analyst.id,
+            notes="Progressing well. On-site diligence scheduled.",
+            entered_pipeline_at=now - timedelta(days=90),
+            last_stage_change_at=now - timedelta(days=7),
+        )
+        pipeline_items.append(pi2)
+
+        # Item 3: Cambridge — BACK_BURNER with reason (was at stage 3)
+        pi3 = PipelineItem(
+            id=uuid4(),
+            organization_id=organizations[3].id,
+            primary_contact_id=contacts[4].id,
+            stage=3,
+            status=PipelineStatus.BACK_BURNER,
+            owner_id=manager.id,
+            created_by=manager.id,
+            back_burner_reason="Consultant is updating their manager recommendations; waiting for Q1 cycle.",
+            notes="Good relationship but timing not right.",
+            entered_pipeline_at=now - timedelta(days=60),
+            last_stage_change_at=now - timedelta(days=20),
+        )
+        pipeline_items.append(pi3)
+
+        # Item 4: Acme — PASSED with reason
+        pi4 = PipelineItem(
+            id=uuid4(),
+            organization_id=organizations[4].id,
+            primary_contact_id=contacts[6].id,
+            stage=2,
+            status=PipelineStatus.PASSED,
+            owner_id=analyst.id,
+            created_by=analyst.id,
+            passed_reason="Pension fund decided to consolidate existing managers rather than add new ones.",
+            notes="May revisit in 12 months when their strategy changes.",
+            entered_pipeline_at=now - timedelta(days=120),
+            last_stage_change_at=now - timedelta(days=30),
+        )
+        pipeline_items.append(pi4)
+
+        # Item 5: Morgan Stanley — ACTIVE at stage 5 (References)
+        pi5 = PipelineItem(
+            id=uuid4(),
+            organization_id=organizations[2].id,
+            primary_contact_id=contacts[3].id,
+            stage=5,
+            status=PipelineStatus.ACTIVE,
+            owner_id=analyst.id,
+            created_by=analyst.id,
+            notes="Reference checks in progress. Strong platform interest.",
+            entered_pipeline_at=now - timedelta(days=150),
+            last_stage_change_at=now - timedelta(days=5),
+        )
+        pipeline_items.append(pi5)
+
+        for pi in pipeline_items:
+            db.add(pi)
+        await db.flush()
+
+        # Create stage history entries for each pipeline item
+        print("  Creating pipeline stage history...")
+
+        # pi1: created at 1 → advanced to 2
+        db.add(PipelineStageHistory(
+            pipeline_item_id=pi1.id, from_stage=None, to_stage=1,
+            from_status=None, to_status="ACTIVE",
+            changed_by_id=manager.id, note="Pipeline item created",
+            changed_at=now - timedelta(days=45),
+        ))
+        db.add(PipelineStageHistory(
+            pipeline_item_id=pi1.id, from_stage=1, to_stage=2,
+            from_status="ACTIVE", to_status="ACTIVE",
+            changed_by_id=manager.id, note="Completed initial meeting, moving to quant review",
+            changed_at=now - timedelta(days=15),
+        ))
+
+        # pi2: created at 1 → 2 → 3 → 4
+        for i, (fs, ts, days_ago, note) in enumerate([
+            (None, 1, 90, "Pipeline item created"),
+            (1, 2, 60, "First meeting went well"),
+            (2, 3, 30, "Quant review passed"),
+            (3, 4, 7, "Patrick meeting positive, moving to live diligence"),
+        ]):
+            db.add(PipelineStageHistory(
+                pipeline_item_id=pi2.id, from_stage=fs, to_stage=ts,
+                from_status=None if fs is None else "ACTIVE", to_status="ACTIVE",
+                changed_by_id=analyst.id, note=note,
+                changed_at=now - timedelta(days=days_ago),
+            ))
+
+        # pi3: created at 1 → 2 → 3 → back burner
+        for fs, ts, f_st, t_st, days_ago, note in [
+            (None, 1, None, "ACTIVE", 60, "Pipeline item created"),
+            (1, 2, "ACTIVE", "ACTIVE", 45, "Moved to quant diligence"),
+            (2, 3, "ACTIVE", "ACTIVE", 30, "Moved to Patrick meeting"),
+            (3, 3, "ACTIVE", "BACK_BURNER", 20, "Consultant updating recs, moving to back burner"),
+        ]:
+            db.add(PipelineStageHistory(
+                pipeline_item_id=pi3.id, from_stage=fs, to_stage=ts,
+                from_status=f_st, to_status=t_st,
+                changed_by_id=manager.id, note=note,
+                changed_at=now - timedelta(days=days_ago),
+            ))
+
+        # pi4: created at 1 → 2 → passed
+        for fs, ts, f_st, t_st, days_ago, note in [
+            (None, 1, None, "ACTIVE", 120, "Pipeline item created"),
+            (1, 2, "ACTIVE", "ACTIVE", 60, "Initial meeting went well"),
+            (2, 2, "ACTIVE", "PASSED", 30, "Fund decided to consolidate existing managers"),
+        ]:
+            db.add(PipelineStageHistory(
+                pipeline_item_id=pi4.id, from_stage=fs, to_stage=ts,
+                from_status=f_st, to_status=t_st,
+                changed_by_id=analyst.id, note=note,
+                changed_at=now - timedelta(days=days_ago),
+            ))
+
+        # pi5: created at 1 → 2 → 3 → 4 → 5
+        for fs, ts, days_ago, note in [
+            (None, 1, 150, "Pipeline item created"),
+            (1, 2, 120, "First meeting completed"),
+            (2, 3, 90, "Quant review positive"),
+            (3, 4, 45, "Patrick meeting done"),
+            (4, 5, 5, "Live diligence complete, moving to references"),
+        ]:
+            db.add(PipelineStageHistory(
+                pipeline_item_id=pi5.id, from_stage=fs, to_stage=ts,
+                from_status=None if fs is None else "ACTIVE", to_status="ACTIVE",
+                changed_by_id=analyst.id, note=note,
+                changed_at=now - timedelta(days=days_ago),
+            ))
+
         await db.commit()
         print("Database seeded successfully!")
         print(f"  - {len(users)} users")
@@ -594,6 +755,7 @@ async def seed_database():
         print(f"  - {len(contacts)} contacts")
         print(f"  - {len(activities)} activities")
         print(f"  - {len(followups)} follow-ups")
+        print(f"  - {len(pipeline_items)} pipeline items")
 
 
 if __name__ == "__main__":

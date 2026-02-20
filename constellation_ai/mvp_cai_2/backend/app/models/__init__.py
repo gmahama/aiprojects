@@ -7,6 +7,7 @@ from app.models.attachment import Attachment, ALLOWED_CONTENT_TYPES
 from app.models.followup import FollowUp, FollowUpStatus
 from app.models.audit import AuditLog, AuditAction
 from app.models.event import Event, EventType, EventAttendee, EventPitch, EventTag, EventVersion
+from app.models.pipeline import PipelineItem, PipelineStageHistory, PipelineStage, PipelineStatus
 
 __all__ = [
     "User",
@@ -36,4 +37,8 @@ __all__ = [
     "EventPitch",
     "EventTag",
     "EventVersion",
+    "PipelineItem",
+    "PipelineStageHistory",
+    "PipelineStage",
+    "PipelineStatus",
 ]

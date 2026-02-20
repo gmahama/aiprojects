@@ -415,6 +415,75 @@ export const api = {
     return res.json();
   },
 
+  // Pipeline
+  async getPipelineBoard(token: string) {
+    const res = await fetchWithAuth("/api/pipeline/board", { token });
+    return res.json();
+  },
+
+  async getPipelineItems(token: string, params?: Record<string, string>) {
+    const queryString = params ? "?" + new URLSearchParams(params).toString() : "";
+    const res = await fetchWithAuth(`/api/pipeline${queryString}`, { token });
+    return res.json();
+  },
+
+  async getPipelineItem(token: string, id: string) {
+    const res = await fetchWithAuth(`/api/pipeline/${id}`, { token });
+    return res.json();
+  },
+
+  async createPipelineItem(token: string, data: Record<string, unknown>) {
+    const res = await fetchWithAuth("/api/pipeline", {
+      method: "POST",
+      body: JSON.stringify(data),
+      token,
+    });
+    return res.json();
+  },
+
+  async updatePipelineItem(token: string, id: string, data: Record<string, unknown>) {
+    const res = await fetchWithAuth(`/api/pipeline/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+      token,
+    });
+    return res.json();
+  },
+
+  async deletePipelineItem(token: string, id: string) {
+    await fetchWithAuth(`/api/pipeline/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  async advancePipelineItem(token: string, id: string, data?: Record<string, unknown>) {
+    const res = await fetchWithAuth(`/api/pipeline/${id}/advance`, {
+      method: "POST",
+      body: JSON.stringify(data || {}),
+      token,
+    });
+    return res.json();
+  },
+
+  async revertPipelineItem(token: string, id: string, data: Record<string, unknown>) {
+    const res = await fetchWithAuth(`/api/pipeline/${id}/revert`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      token,
+    });
+    return res.json();
+  },
+
+  async reactivatePipelineItem(token: string, id: string, data: Record<string, unknown>) {
+    const res = await fetchWithAuth(`/api/pipeline/${id}/reactivate`, {
+      method: "POST",
+      body: JSON.stringify(data),
+      token,
+    });
+    return res.json();
+  },
+
   // Document Parsing
   async parseDocument(token: string, file: File) {
     const formData = new FormData();

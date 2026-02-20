@@ -17,6 +17,7 @@ from app.routers import (
     export,
     events,
     document_parsing,
+    pipeline,
 )
 
 
@@ -57,3 +58,4 @@ app.include_router(audit.router, prefix="/api/audit", tags=["Audit"])
 app.include_router(export.router, prefix="/api/export", tags=["Export"])
 app.include_router(events.router, prefix="/api/events", tags=["Events"])
 app.include_router(document_parsing.router, prefix="/api", tags=["Document Parsing"])
+app.include_router(pipeline.router, prefix="/api/pipeline", tags=["Pipeline"])

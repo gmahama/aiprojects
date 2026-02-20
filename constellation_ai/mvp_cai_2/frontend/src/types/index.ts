@@ -349,3 +349,80 @@ export interface DocumentParseResponse {
   data: ExtractedActivityData | null;
   error: string | null;
 }
+
+// Pipeline types
+export type PipelineStatus = "ACTIVE" | "BACK_BURNER" | "PASSED" | "CONVERTED";
+
+export interface PipelineItem {
+  id: string;
+  organization_id: string;
+  organization_name: string | null;
+  primary_contact_id: string | null;
+  primary_contact_name: string | null;
+  stage: number;
+  stage_label: string | null;
+  status: PipelineStatus;
+  owner_id: string;
+  owner_name: string | null;
+  created_by: string;
+  back_burner_reason: string | null;
+  passed_reason: string | null;
+  notes: string | null;
+  entered_pipeline_at: string;
+  last_stage_change_at: string;
+  days_in_stage: number | null;
+  days_in_pipeline: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PipelineStageHistory {
+  id: string;
+  pipeline_item_id: string;
+  from_stage: number | null;
+  to_stage: number;
+  from_status: string | null;
+  to_status: string;
+  changed_by_id: string;
+  changed_by_name: string | null;
+  from_stage_label: string | null;
+  to_stage_label: string | null;
+  note: string | null;
+  changed_at: string;
+}
+
+export interface PipelineItemDetail extends PipelineItem {
+  stage_history: PipelineStageHistory[];
+}
+
+export interface PipelineBackBurnerItem extends PipelineItem {
+  stage_when_shelved: number | null;
+  stage_when_shelved_label: string | null;
+}
+
+export interface PipelineBoardStage {
+  stage: number;
+  label: string;
+  items: PipelineItem[];
+}
+
+export interface PipelineBoardSummary {
+  total_active: number;
+  total_back_burner: number;
+  total_passed: number;
+  total_converted: number;
+}
+
+export interface PipelineBoardResponse {
+  stages: PipelineBoardStage[];
+  back_burner: PipelineBackBurnerItem[];
+  summary: PipelineBoardSummary;
+}
+
+export interface PipelineItemFormData {
+  organization_id: string;
+  primary_contact_id?: string;
+  owner_id: string;
+  stage?: number;
+  notes?: string;
+}

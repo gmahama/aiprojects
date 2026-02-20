@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import text
 
 from app.main import app as fastapi_app
-from app.database import Base, get_db
-from app.dependencies import get_current_user
+from app.database import Base
+from app.dependencies import get_db, get_current_user
 from app.models.user import User, UserRole
 
 # Import all models so that Base.metadata knows about them
